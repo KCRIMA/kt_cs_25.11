@@ -83,72 +83,55 @@
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
         }
 
-        .brand {
+        .header-left {
             display: flex;
             align-items: center;
             gap: 14px;
             min-width: 0;
         }
 
-        .brand-name {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            white-space: nowrap;
-        }
-
-        .agent-pill {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 14px;
-            border-radius: 999px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-tertiary);
-        }
-
-        .agent-avatar {
-            width: 32px;
-            height: 32px;
+        .brand-icon {
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             background: var(--gradient-info);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         }
 
-        .agent-meta {
+        .brand-info {
             display: flex;
             flex-direction: column;
-            line-height: 1.2;
+            line-height: 1.3;
         }
 
-        .agent-label {
-            font-size: 13px;
+        .brand-name {
+            font-size: 18px;
             font-weight: 600;
             color: var(--text-primary);
         }
 
-        .agent-ext {
-            font-size: 12px;
-            color: var(--text-muted);
+        .agent-meta {
+            font-size: 13px;
+            color: var(--text-secondary);
         }
 
-        .header-search {
+        .search-bar {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            padding: 6px 6px 6px 18px;
             border: 1px solid var(--border-color);
             border-radius: 999px;
-            padding: 5px 6px 5px 16px;
             background: var(--bg-secondary);
             box-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.06);
         }
 
-        .search-input {
+        .search-bar input {
             flex: 1;
             border: none;
             background: transparent;
@@ -157,92 +140,108 @@
             outline: none;
         }
 
-        .search-input::placeholder {
+        .search-bar input::placeholder {
             color: var(--text-muted);
         }
 
         .search-btn {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             border: none;
             background: var(--accent-blue);
             color: white;
-            font-size: 15px;
+            font-size: 16px;
             cursor: pointer;
-            box-shadow: 0 8px 14px rgba(37, 99, 235, 0.2);
+            transition: transform 0.2s ease;
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
         }
 
-        .header-actions {
+        .search-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .header-right {
             display: flex;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: flex-end;
+            gap: 10px;
         }
 
-        .action-btn {
+        .call-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .call-btn {
             display: flex;
             align-items: center;
             gap: 6px;
+            padding: 8px 14px;
             border-radius: 999px;
             border: 1px solid var(--border-color);
-            padding: 8px 16px;
+            background: var(--bg-tertiary);
             font-size: 13px;
             font-weight: 500;
-            background: var(--bg-tertiary);
             color: var(--text-primary);
             cursor: pointer;
             transition: all 0.2s ease;
         }
 
-        .action-btn.primary {
+        .call-btn.primary {
             background: var(--accent-blue);
             border-color: var(--accent-blue);
             color: white;
             box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
         }
 
-        .action-btn.safe {
+        .call-btn.safe {
             background: rgba(5, 150, 105, 0.15);
             border-color: rgba(5, 150, 105, 0.3);
             color: var(--accent-green);
         }
 
-        .action-btn.neutral {
+        .call-btn.muted {
             background: rgba(148, 163, 184, 0.15);
             border-color: rgba(148, 163, 184, 0.4);
             color: var(--text-secondary);
         }
 
-        .action-btn.danger {
+        .call-btn.warning {
+            background: rgba(234, 88, 12, 0.15);
+            border-color: rgba(234, 88, 12, 0.35);
+            color: var(--accent-orange);
+        }
+
+        .call-btn.danger {
             background: rgba(220, 38, 38, 0.15);
-            border-color: rgba(220, 38, 38, 0.4);
+            border-color: rgba(220, 38, 38, 0.35);
             color: var(--accent-red);
         }
 
-        .action-btn:hover {
+        .call-btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
         }
 
-        .call-status {
+        .status-chip {
             display: flex;
             align-items: center;
             gap: 8px;
             padding: 8px 14px;
             border-radius: 999px;
-            background: var(--bg-tertiary);
+            background: rgba(5, 150, 105, 0.08);
+            border: 1px solid rgba(5, 150, 105, 0.2);
             font-size: 13px;
-            color: var(--text-secondary);
+            color: var(--accent-green);
         }
 
-        .status-dot,
-        .call-indicator {
+        .status-dot {
             width: 8px;
             height: 8px;
-            background: var(--accent-green);
             border-radius: 50%;
+            background: var(--accent-green);
             animation: pulse 2s infinite;
         }
 
@@ -957,11 +956,17 @@
                 gap: 14px;
             }
 
-            .header-actions {
+            .header-right {
+                flex-wrap: wrap;
                 justify-content: flex-start;
             }
 
-            .header-search {
+            .call-actions {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .search-bar {
                 width: 100%;
             }
         }
@@ -973,31 +978,30 @@
 <div class="dashboard">
     <!-- Header -->
     <header class="header">
-        <div class="brand">
-            <span class="brand-name">(주)선견지명</span>
-            <div class="agent-pill">
-                <div class="agent-avatar">루</div>
-                <div class="agent-meta">
-                    <span class="agent-label">루 상담사</span>
-                    <span class="agent-ext">내선 3001</span>
-                </div>
+        <div class="header-left">
+            <div class="brand-icon">🔮</div>
+            <div class="brand-info">
+                <span class="brand-name">㈜FORESEE</span>
+                <span class="agent-meta">루 상담사 · 내선 3001</span>
             </div>
         </div>
 
-        <div class="header-search">
-            <input type="text" class="search-input" placeholder="전화번호 또는 고객명을 입력하세요" aria-label="검색어 입력">
+        <div class="search-bar">
+            <input type="text" placeholder="전화번호 입력 (###-##)" aria-label="전화번호 검색">
             <button class="search-btn" aria-label="검색">🔍</button>
         </div>
 
-        <div class="header-actions">
-            <button class="action-btn primary">📞 걸기</button>
-            <button class="action-btn safe">📞 받기</button>
-            <button class="action-btn neutral">🔇 음소거</button>
-            <button class="action-btn neutral">⏸️ 보류</button>
-            <button class="action-btn neutral">🔁 넘겨주기</button>
-            <button class="action-btn danger">🔚 끊기</button>
-            <div class="call-status">
-                <span class="call-indicator"></span>
+        <div class="header-right">
+            <div class="call-actions">
+                <button class="call-btn primary">📞 걸기</button>
+                <button class="call-btn safe">📞 받기</button>
+                <button class="call-btn muted">🔇 음소거</button>
+                <button class="call-btn muted">⏸️ 보류</button>
+                <button class="call-btn warning">🔁 넘겨주기</button>
+                <button class="call-btn danger">🔚 끊기</button>
+            </div>
+            <div class="status-chip">
+                <span class="status-dot"></span>
                 온라인 00:00:00
             </div>
             <button class="context-btn">선택</button>
