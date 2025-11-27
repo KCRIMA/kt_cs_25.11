@@ -71,60 +71,174 @@
         /* Header */
         .header {
             grid-column: 1 / -1;
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
             align-items: center;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 8px;
+            gap: 18px;
+            padding: 14px 18px;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            background: var(--bg-secondary);
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
         }
 
-        .logo {
+        .brand {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
+            min-width: 0;
         }
 
-        .logo-icon {
-            width: 40px;
-            height: 40px;
+        .brand-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+
+        .agent-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+        }
+
+        .agent-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
             background: var(--gradient-info);
-            border-radius: 10px;
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-        }
-
-        .logo h1 {
-            font-size: 22px;
+            font-size: 14px;
             font-weight: 600;
-            background: linear-gradient(135deg, #1E293B 0%, #475569 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
-        .header-right {
+        .agent-meta {
             display: flex;
-            align-items: center;
-            gap: 16px;
+            flex-direction: column;
+            line-height: 1.2;
         }
 
-        .status-badge {
+        .agent-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .agent-ext {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .header-search {
             display: flex;
             align-items: center;
             gap: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            padding: 5px 6px 5px 16px;
+            background: var(--bg-secondary);
+            box-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.06);
+        }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: var(--accent-blue);
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            box-shadow: 0 8px 14px rgba(37, 99, 235, 0.2);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
             padding: 8px 16px;
-            background: rgba(5, 150, 105, 0.08);
-            border: 1px solid rgba(5, 150, 105, 0.2);
-            border-radius: 20px;
             font-size: 13px;
+            font-weight: 500;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn.primary {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
+        }
+
+        .action-btn.safe {
+            background: rgba(5, 150, 105, 0.15);
+            border-color: rgba(5, 150, 105, 0.3);
             color: var(--accent-green);
         }
 
-        .status-dot {
+        .action-btn.neutral {
+            background: rgba(148, 163, 184, 0.15);
+            border-color: rgba(148, 163, 184, 0.4);
+            color: var(--text-secondary);
+        }
+
+        .action-btn.danger {
+            background: rgba(220, 38, 38, 0.15);
+            border-color: rgba(220, 38, 38, 0.4);
+            color: var(--accent-red);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
+        }
+
+        .call-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: var(--bg-tertiary);
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .status-dot,
+        .call-indicator {
             width: 8px;
             height: 8px;
             background: var(--accent-green);
@@ -135,6 +249,22 @@
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
+        }
+
+        .context-btn {
+            padding: 8px 18px;
+            border-radius: 999px;
+            border: 1px dashed var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .context-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
         }
 
         /* Panels */
@@ -823,9 +953,16 @@
             }
 
             .header {
-                flex-direction: column;
-                gap: 16px;
-                text-align: center;
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .header-actions {
+                justify-content: flex-start;
+            }
+
+            .header-search {
+                width: 100%;
             }
         }
     </style>
@@ -836,15 +973,34 @@
 <div class="dashboard">
     <!-- Header -->
     <header class="header">
-        <div class="logo">
-            <div class="logo-icon">🔮</div>
-            <h1>RAG Dashboard</h1>
-        </div>
-        <div class="header-right">
-            <div class="status-badge">
-                <span class="status-dot"></span>
-                실시간 분석 중
+        <div class="brand">
+            <span class="brand-name">(주)선견지명</span>
+            <div class="agent-pill">
+                <div class="agent-avatar">루</div>
+                <div class="agent-meta">
+                    <span class="agent-label">루 상담사</span>
+                    <span class="agent-ext">내선 3001</span>
+                </div>
             </div>
+        </div>
+
+        <div class="header-search">
+            <input type="text" class="search-input" placeholder="전화번호 또는 고객명을 입력하세요" aria-label="검색어 입력">
+            <button class="search-btn" aria-label="검색">🔍</button>
+        </div>
+
+        <div class="header-actions">
+            <button class="action-btn primary">📞 걸기</button>
+            <button class="action-btn safe">📞 받기</button>
+            <button class="action-btn neutral">🔇 음소거</button>
+            <button class="action-btn neutral">⏸️ 보류</button>
+            <button class="action-btn neutral">🔁 넘겨주기</button>
+            <button class="action-btn danger">🔚 끊기</button>
+            <div class="call-status">
+                <span class="call-indicator"></span>
+                온라인 00:00:00
+            </div>
+            <button class="context-btn">선택</button>
         </div>
     </header>
 
