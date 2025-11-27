@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - 고객 분석 대시보드</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        }
+
+        :root {
+            --bg-primary: #F8FAFC;
+            --bg-white: #FFFFFF;
+            --text-primary: #1A1A1A;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
+            --border-color: #E2E8F0;
+            --accent-blue: #3B82F6;
+            --accent-indigo: #6366F1;
+            --accent-purple: #8B5CF6;
+            --accent-pink: #EC4899;
+            --accent-red: #EF4444;
+            --accent-orange: #F97316;
+            --accent-yellow: #EAB308;
+            --accent-green: #22C55E;
+            --accent-teal: #14B8A6;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .dashboard {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .date-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--bg-white);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .refresh-btn {
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent-blue);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Search Box */
+        .search-container {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px 20px 12px 48px;
+            background: var(--bg-white);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-box::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 8px 16px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-50%) scale(1.02);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Search Dropdown */
+        .search-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: var(--bg-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            z-index: 100;
+            display: none;
+            overflow: hidden;
+        }
+
+        .search-dropdown.active {
+            display: block;
+            animation: dropdownSlide 0.2s ease;
+        }
+
+        @keyframes dropdownSlide {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dropdown-header {
+            padding: 12px 16px;
+            background: var(--bg-primary);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .dropdown-item-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .dropdown-item-info {
+            flex: 1;
+        }
+
+        .dropdown-item-id {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .dropdown-item-detail {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .dropdown-item-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .dropdown-item-badge.high-risk {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+        }
+
+        .dropdown-item-badge.medium-risk {
+            background: rgba(249, 115, 22, 0.1);
+            color: var(--accent-orange);
+        }
+
+        .dropdown-item-badge.low-risk {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--accent-green);
+        }
+
+        /* Anomaly Popup */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .popup-overlay.active {
+            display: flex;
+        }
+
+        .popup {
+            background: var(--bg-white);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 480px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            animation: popupSlide 0.4s ease;
+        }
+
+        @keyframes popupSlide {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .popup-header {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+            padding: 24px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .popup-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+
+        .popup-header-icon {
+            width: 56px;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 16px;
+            animation: pulse 2s infinite;
+        }
+
+        .popup-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .popup-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .popup-body {
+            padding: 24px;
+        }
+
+        .popup-customer-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .popup-customer-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+        }
+
+        .popup-customer-details h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .popup-customer-details p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .popup-risk-score {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .popup-risk-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--accent-red);
+        }
+
+        .popup-risk-info {
+            flex: 1;
+        }
+
+        .popup-risk-info h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-red);
+        }
+
+        .popup-risk-info p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .popup-reasons {
+            margin-bottom: 24px;
+        }
+
+        .popup-reasons h4 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .popup-reason-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .popup-reason-item:last-child {
+            border-bottom: none;
+        }
+
+        .popup-reason-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(249, 115, 22, 0.1);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .popup-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .popup-btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .popup-btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .popup-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .popup-btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .popup-btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .popup-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .popup-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: var(--bg-white);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            border-left: 4px solid var(--accent-red);
+            animation: toastSlide 0.4s ease;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .toast:hover {
+            transform: translateX(-4px);
+        }
+
+        @keyframes toastSlide {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .toast-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(0); }
+            25% { transform: rotate(-10deg); }
+            75% { transform: rotate(10deg); }
+        }
+
+        .toast-content h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .toast-content p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+            margin-left: auto;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: all 0.3s ease;
+            animation: slideUp 0.5s ease forwards;
+            opacity: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            border-radius: 4px 0 0 4px;
+        }
+
+        .stat-card:nth-child(1)::before { background: linear-gradient(180deg, var(--accent-blue), var(--accent-indigo)); }
+        .stat-card:nth-child(2)::before { background: linear-gradient(180deg, var(--accent-red), var(--accent-pink)); }
+        .stat-card:nth-child(3)::before { background: linear-gradient(180deg, var(--accent-teal), var(--accent-green)); }
+        .stat-card:nth-child(4)::before { background: linear-gradient(180deg, var(--accent-orange), var(--accent-yellow)); }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.15s; }
+        .stat-card:nth-child(3) { animation-delay: 0.2s; }
+        .stat-card:nth-child(4) { animation-delay: 0.25s; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -1px;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-change.positive { color: var(--accent-green); }
+        .stat-change.negative { color: var(--accent-red); }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 450px 1fr;
+            gap: 24px;
+        }
+
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-white);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            animation: slideUp 0.6s ease forwards;
+            opacity: 0;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+        }
+
+        .card-menu {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .card-menu:hover {
+            background: var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        /* Chart Containers */
+        .chart-container {
+            position: relative;
+            height: 180px;
+        }
+
+        .chart-container.large {
+            height: 200px;
+        }
+
+        /* Bottom Row */
+        .bottom-row {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 24px;
+        }
+
+        /* Risk Gauge */
+        .risk-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .risk-gauge {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .risk-gauge svg {
+            position: absolute;
+            transform: rotate(-90deg);
+        }
+
+        .risk-gauge-bg {
+            fill: none;
+            stroke: #F1F5F9;
+            stroke-width: 12;
+        }
+
+        .risk-gauge-fill {
+            fill: none;
+            stroke: url(#riskGradient);
+            stroke-width: 12;
+            stroke-linecap: round;
+            stroke-dasharray: 440;
+            stroke-dashoffset: 145;
+            animation: gaugeAnim 1.5s ease-out forwards;
+        }
+
+        @keyframes gaugeAnim {
+            from { stroke-dashoffset: 440; }
+            to { stroke-dashoffset: 145; }
+        }
+
+        .risk-value {
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .risk-label {
+            margin-top: 12px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .risk-status {
+            margin-top: 8px;
+            padding: 6px 14px;
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(239, 68, 68, 0.1));
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-orange);
+        }
+
+        /* Topic List */
+        .topic-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .topic-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .topic-bar-container {
+            flex: 1;
+            height: 28px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .topic-bar {
+            height: 100%;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            padding-left: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            color: white;
+            transition: width 1s ease;
+        }
+
+        .topic-label {
+            width: 80px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .topic-value {
+            width: 40px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: right;
+        }
+
+        /* Issue Trend */
+        .trend-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 160px;
+            padding-top: 20px;
+        }
+
+        .trend-bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .trend-bar {
+            width: 100%;
+            border-radius: 6px 6px 0 0;
+            transition: height 0.8s ease;
+            position: relative;
+        }
+
+        .trend-bar::after {
+            content: attr(data-value);
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .trend-label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Animation delays for cards */
+        .left-column .card:nth-child(1) { animation-delay: 0.3s; }
+        .left-column .card:nth-child(2) { animation-delay: 0.4s; }
+        .right-column .card:nth-child(1) { animation-delay: 0.35s; }
+        .bottom-row .card:nth-child(1) { animation-delay: 0.45s; }
+        .bottom-row .card:nth-child(2) { animation-delay: 0.5s; }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .bottom-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .dashboard {
+                padding: 16px;
+                gap: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <!-- Header -->
+    <header class="header">
+        <h1>Dashboard</h1>
+
+        <!-- Search Box -->
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-box" id="customerSearch" placeholder="고객 ID를 입력하세요 (예: 4088-YLDSU)" autocomplete="off">
+            <button class="search-btn" onclick="searchCustomer()">검색</button>
+
+            <!-- Search Dropdown -->
+            <div class="search-dropdown" id="searchDropdown">
+                <div class="dropdown-header">최근 검색 및 이상 고객</div>
+                <div class="dropdown-item" onclick="goToCustomer('4088-YLDSU')">
+                    <div class="dropdown-item-icon">👤</div>
+                    <div class="dropdown-item-info">
+                        <div class="dropdown-item-id">4088-YLDSU</div>
+                        <div class="dropdown-item-detail">One-year · Electronic Check</div>
+                    </div>
+                    <span class="dropdown-item-badge high-risk">92% 위험</span>
+                </div>
+                <div class="dropdown-item" onclick="goToCustomer('7295-KBMNA')">
+                    <div class="dropdown-item-icon">👤</div>
+                    <div class="dropdown-item-info">
+                        <div class="dropdown-item-id">7295-KBMNA</div>
+                        <div class="dropdown-item-detail">Two-year · Credit Card</div>
+                    </div>
+                    <span class="dropdown-item-badge medium-risk">67% 위험</span>
+                </div>
+                <div class="dropdown-item" onclick="goToCustomer('3829-PLWXA')">
+                    <div class="dropdown-item-icon">👤</div>
+                    <div class="dropdown-item-info">
+                        <div class="dropdown-item-id">3829-PLWXA</div>
+                        <div class="dropdown-item-detail">Month-to-month · Bank Transfer</div>
+                    </div>
+                    <span class="dropdown-item-badge low-risk">23% 위험</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <div class="date-badge">
+                📅 2024년 11월 27일
+            </div>
+            <button class="refresh-btn" onclick="location.reload()">
+                🔄
+            </button>
+        </div>
+    </header>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Anomaly Popup -->
+    <div class="popup-overlay" id="anomalyPopup">
+        <div class="popup">
+            <div class="popup-header">
+                <button class="popup-close" onclick="closePopup()">✕</button>
+                <div class="popup-header-icon">⚠️</div>
+                <h2>이상 고객 감지</h2>
+                <p>고위험 이탈 가능성이 있는 고객이 발견되었습니다</p>
+            </div>
+            <div class="popup-body">
+                <div class="popup-customer-info">
+                    <div class="popup-customer-avatar">👤</div>
+                    <div class="popup-customer-details">
+                        <h3 id="popupCustomerId">4088-YLDSU</h3>
+                        <p>One-year 계약 · Electronic Check 결제</p>
+                    </div>
+                </div>
+
+                <div class="popup-risk-score">
+                    <span class="popup-risk-value" id="popupRiskScore">92%</span>
+                    <div class="popup-risk-info">
+                        <h4>이탈 위험도</h4>
+                        <p>즉각적인 대응이 필요합니다</p>
+                    </div>
+                </div>
+
+                <div class="popup-reasons">
+                    <h4>주요 위험 요인</h4>
+                    <div class="popup-reason-item">
+                        <span class="popup-reason-icon">💰</span>
+                        최근 요금 급등 (전월 대비 +42%)
+                    </div>
+                    <div class="popup-reason-item">
+                        <span class="popup-reason-icon">📞</span>
+                        반복 문의 3회 발생
+                    </div>
+                    <div class="popup-reason-item">
+                        <span class="popup-reason-icon">⏱️</span>
+                        평균 대기 시간 증가
+                    </div>
+                </div>
+
+                <div class="popup-actions">
+                    <button class="popup-btn popup-btn-secondary" onclick="closePopup()">나중에</button>
+                    <button class="popup-btn popup-btn-primary" onclick="goToCustomer('4088-YLDSU')">상세 분석 보기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <span class="stat-label">일일 건수</span>
+            <span class="stat-value">11</span>
+            <span class="stat-change positive">↑ 2.3% vs 어제</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">해지 건수</span>
+            <span class="stat-value">2</span>
+            <span class="stat-change negative">↑ 1건 증가</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">문의 건수</span>
+            <span class="stat-value">245</span>
+            <span class="stat-change positive">↓ 5.1% 감소</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">재발 고객</span>
+            <span class="stat-value">134</span>
+            <span class="stat-change negative">↑ 12명 증가</span>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+        <!-- Left Column -->
+        <div class="left-column">
+            <!-- Issue Trend Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">이상징후 발생 현황</h3>
+                    <button class="card-menu">⋮</button>
+                </div>
+                <div class="trend-chart">
+                    <div class="trend-bar-wrapper">
+                        <div class="trend-bar" style="height: 60%; background: linear-gradient(180deg, #6366F1, #8B5CF6);" data-value="12"></div>
+                        <span class="trend-label">월</span>
+                    </div>
+                    <div class="trend-bar-wrapper">
+                        <div class="trend-bar" style="height: 80%; background: linear-gradient(180deg, #6366F1, #8B5CF6);" data-value="18"></div>
+                        <span class="trend-label">화</span>
+                    </div>
+                    <div class="trend-bar-wrapper">
+                        <div class="trend-bar" style="height: 45%; background: linear-gradient(180deg, #6366F1, #8B5CF6);" data-value="9"></div>
+                        <span class="trend-label">수</span>
+                    </div>
+                    <div class="trend-bar-wrapper">
+                        <div class="trend-bar" style="height: 95%; background: linear-gradient(180deg, #EF4444, #F97316);" data-value="24"></div>
+                        <span class="trend-label">목</span>
+                    </div>
+                    <div class="trend-bar-wrapper">
+                        <div class="trend-bar" style="height: 70%; background: linear-gradient(180deg, #6366F1, #8B5CF6);" data-value="15"></div>
+                        <span class="trend-label">금</span>
+                    </div>
+                    <div class="trend-bar-wrapper">
+                        <div class="trend-bar" style="height: 35%; background: linear-gradient(180deg, #22C55E, #14B8A6);" data-value="7"></div>
+                        <span class="trend-label">토</span>
+                    </div>
+                    <div class="trend-bar-wrapper">
+                        <div class="trend-bar" style="height: 25%; background: linear-gradient(180deg, #22C55E, #14B8A6);" data-value="5"></div>
+                        <span class="trend-label">일</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Topic Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">문의 주제별 건수</h3>
+                    <button class="card-menu">⋮</button>
+                </div>
+                <div class="topic-list">
+                    <div class="topic-item">
+                        <span class="topic-label">요금 문의</span>
+                        <div class="topic-bar-container">
+                            <div class="topic-bar" style="width: 85%; background: linear-gradient(90deg, #3B82F6, #6366F1);">85</div>
+                        </div>
+                        <span class="topic-value">85</span>
+                    </div>
+                    <div class="topic-item">
+                        <span class="topic-label">품질 문의</span>
+                        <div class="topic-bar-container">
+                            <div class="topic-bar" style="width: 62%; background: linear-gradient(90deg, #8B5CF6, #EC4899);">62</div>
+                        </div>
+                        <span class="topic-value">62</span>
+                    </div>
+                    <div class="topic-item">
+                        <span class="topic-label">해지 문의</span>
+                        <div class="topic-bar-container">
+                            <div class="topic-bar" style="width: 48%; background: linear-gradient(90deg, #EF4444, #F97316);">48</div>
+                        </div>
+                        <span class="topic-value">48</span>
+                    </div>
+                    <div class="topic-item">
+                        <span class="topic-label">기타</span>
+                        <div class="topic-bar-container">
+                            <div class="topic-bar" style="width: 50%; background: linear-gradient(90deg, #14B8A6, #22C55E);">50</div>
+                        </div>
+                        <span class="topic-value">50</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="right-column">
+            <!-- Time Series Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">문의량 시계열 그래프</h3>
+                    <button class="card-menu">⋮</button>
+                </div>
+                <div class="chart-container large">
+                    <canvas id="timeSeriesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Bottom Row -->
+            <div class="bottom-row">
+                <!-- Sentiment Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">상담 내용 기반 감정 점수 분포</h3>
+                        <button class="card-menu">⋮</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="sentimentChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Risk Card -->
+                <div class="card risk-card">
+                    <div class="card-header" style="width: 100%;">
+                        <h3 class="card-title">전체 리스크 지수</h3>
+                    </div>
+                    <div class="risk-gauge">
+                        <svg width="180" height="180" viewBox="0 0 180 180">
+                            <defs>
+                                <linearGradient id="riskGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#F97316"/>
+                                    <stop offset="100%" style="stop-color:#EF4444"/>
+                                </linearGradient>
+                            </defs>
+                            <circle class="risk-gauge-bg" cx="90" cy="90" r="70"/>
+                            <circle class="risk-gauge-fill" cx="90" cy="90" r="70"/>
+                        </svg>
+                        <span class="risk-value">67%</span>
+                    </div>
+                    <span class="risk-label">전체 고객 대비 위험 수준</span>
+                    <span class="risk-status">⚠️ 주의 필요</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Time Series Chart
+    const timeSeriesCtx = document.getElementById('timeSeriesChart').getContext('2d');
+
+    const gradient = timeSeriesCtx.createLinearGradient(0, 0, 0, 200);
+    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
+    gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+    new Chart(timeSeriesCtx, {
+        type: 'line',
+        data: {
+            labels: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'],
+            datasets: [{
+                label: '문의량',
+                data: [12, 19, 28, 35, 22, 18, 32, 45, 38, 24],
+                borderColor: '#6366F1',
+                backgroundColor: gradient,
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#6366F1',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#94A3B8', font: { size: 11 } }
+                },
+                y: {
+                    grid: { color: '#F1F5F9' },
+                    ticks: { color: '#94A3B8', font: { size: 11 } }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+
+    // Sentiment Chart
+    const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+
+    new Chart(sentimentCtx, {
+        type: 'bar',
+        data: {
+            labels: ['매우 부정', '부정', '중립', '긍정', '매우 긍정'],
+            datasets: [{
+                label: '건수',
+                data: [15, 42, 88, 65, 35],
+                backgroundColor: [
+                    'rgba(239, 68, 68, 0.8)',
+                    'rgba(249, 115, 22, 0.8)',
+                    'rgba(148, 163, 184, 0.8)',
+                    'rgba(34, 197, 94, 0.8)',
+                    'rgba(16, 185, 129, 0.8)'
+                ],
+                borderRadius: 6,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#94A3B8', font: { size: 10 } }
+                },
+                y: {
+                    grid: { color: '#F1F5F9' },
+                    ticks: { color: '#94A3B8', font: { size: 11 } }
+                }
+            }
+        }
+    });
+
+    // Animate trend bars on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const bars = document.querySelectorAll('.trend-bar');
+        bars.forEach((bar, index) => {
+            const height = bar.style.height;
+            bar.style.height = '0%';
+            setTimeout(() => {
+                bar.style.height = height;
+            }, 100 + index * 100);
+        });
+
+        const topicBars = document.querySelectorAll('.topic-bar');
+        topicBars.forEach((bar, index) => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 300 + index * 150);
+        });
+
+        // Show anomaly notification after 2 seconds
+        setTimeout(() => {
+            showAnomalyToast();
+        }, 2000);
+    });
+
+    // Search functionality
+    const searchInput = document.getElementById('customerSearch');
+    const searchDropdown = document.getElementById('searchDropdown');
+
+    searchInput.addEventListener('focus', () => {
+        searchDropdown.classList.add('active');
+    });
+
+    searchInput.addEventListener('blur', (e) => {
+        // Delay to allow click on dropdown items
+        setTimeout(() => {
+            searchDropdown.classList.remove('active');
+        }, 200);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            searchCustomer();
+        }
+    });
+
+    function searchCustomer() {
+        const customerId = searchInput.value.trim();
+        if (customerId) {
+            goToCustomer(customerId);
+        } else {
+            // Show dropdown with suggestions
+            searchDropdown.classList.add('active');
+        }
+    }
+
+    function goToCustomer(customerId) {
+        // Transition effect
+        document.body.style.opacity = '0';
+        document.body.style.transition = 'opacity 0.3s ease';
+
+        setTimeout(() => {
+            window.location.href = 'rag-dashboard.html?id=' + customerId;
+        }, 300);
+    }
+
+    // Anomaly Popup
+    function showAnomalyPopup() {
+        document.getElementById('anomalyPopup').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePopup() {
+        document.getElementById('anomalyPopup').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Toast Notifications
+    function showAnomalyToast() {
+        const toastContainer = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `
+                <div class="toast-icon">🚨</div>
+                <div class="toast-content">
+                    <h4>이상 고객 발견!</h4>
+                    <p>4088-YLDSU · 이탈 위험도 92%</p>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
+            `;
+        toast.onclick = (e) => {
+            if (!e.target.classList.contains('toast-close')) {
+                showAnomalyPopup();
+                toast.remove();
+            }
+        };
+        toastContainer.appendChild(toast);
+
+        // Auto remove after 10 seconds
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.style.animation = 'toastSlide 0.3s ease reverse';
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, 10000);
+    }
+
+    // Close popup when clicking overlay
+    document.getElementById('anomalyPopup').addEventListener('click', (e) => {
+        if (e.target.id === 'anomalyPopup') {
+            closePopup();
+        }
+    });
+
+    // ESC key to close popup
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closePopup();
+        }
+    });
+</script>
+</body>
+</html>
+

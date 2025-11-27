@@ -1,0 +1,17 @@
+spring:
+  profiles:
+    active: local
+
+  thymeleaf:
+    enabled: false
+
+  mustache:
+    prefix: classpath:/templates/
+    suffix: .mustache
+    charset: UTF-8
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration
+
+

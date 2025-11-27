@@ -1,0 +1,7 @@
+dash:
+  api:
+    host: http://127.0.0.1:8000
+
+admin:
+  api:
+    host: http://127.0.0.1:8001
