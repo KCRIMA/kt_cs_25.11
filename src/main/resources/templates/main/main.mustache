@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Call Center Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --sidebar-bg: #ffffff;
+            --card-bg: #ffffff;
+            --primary-blue: #3b82f6;
+            --primary-light: #eff6ff;
+            --text-dark: #1e293b;
+            --text-gray: #64748b;
+            --border-color: #e2e8f0;
+            --danger-red: #ef4444;
+            --success-green: #10b981;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Header (Call Control Bar) --- */
+        header {
+            background: var(--card-bg);
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--primary-blue);
+        }
+
+        .call-timer {
+            background-color: var(--danger-red);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-family: monospace;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .call-controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-control {
+            border: 1px solid var(--border-color);
+            background: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-control:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-blue);
+            border-color: var(--primary-blue);
+        }
+
+        .btn-control.active {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+
+        /* --- Main Layout --- */
+        .container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 70px);
+        }
+
+        /* --- Sidebar (Navigation & Personal Stats) --- */
+        aside {
+            width: 260px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .nav-menu {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .nav-item {
+            padding: 12px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-gray);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item.active {
+            background-color: var(--primary-light);
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        .stat-card {
+            background: var(--bg-color);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-title {
+            font-size: 0.85rem;
+            color: var(--text-gray);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        /* --- Main Content Area --- */
+        main {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            gap: 24px;
+        }
+
+        /* Left Column of Main (Customer Info + Call Log) */
+        .main-col-left {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Right Column of Main (History / Script) */
+        .main-col-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* --- Cards --- */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* --- Forms --- */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full-width {
+            grid-column: span 3;
+        }
+
+        .form-group.half-width {
+            grid-column: span 1.5;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-gray);
+        }
+
+        input[type="text"], select, textarea {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+            background-color: #f9fafb;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-blue);
+            background-color: white;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        /* --- Buttons --- */
+        .btn-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: var(--text-dark);
+            color: white;
+        }
+
+        .btn-outline {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            color: var(--text-dark);
+        }
+
+        /* --- History Table (Modernized) --- */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .history-table th {
+            text-align: left;
+            padding: 12px;
+            font-size: 0.85rem;
+            color: var(--text-gray);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .history-table td {
+            padding: 12px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--bg-color);
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-blue { background: var(--primary-light); color: var(--primary-blue); }
+        .badge-gray { background: #f1f5f9; color: var(--text-gray); }
+
+        /* --- Tabs --- */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-gray);
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            color: var(--primary-blue);
+            border-bottom-color: var(--primary-blue);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+            <span>AICC Contact Center</span>
+        </div>
+
+        <div class="call-controls">
+            <div class="call-timer">
+                <span style="width: 10px; height: 10px; background: white; border-radius: 50%; animation: blink 1s infinite;"></span>
+                00:00:00
+            </div>
+            <button class="btn-control active">ON (대기)</button>
+            <button class="btn-control">이석</button>
+            <button class="btn-control">보류</button>
+            <button class="btn-control">협의</button>
+            <button class="btn-control">호전환</button>
+            <button class="btn-control">걸기</button>
+            <button class="btn-control" style="color: var(--danger-red); border-color: var(--danger-red);">끊기</button>
+        </div>
+        
+        <div style="font-size: 0.9rem; color: var(--text-gray);">
+            관리자01(2001)님 <button class="btn-outline" style="padding: 4px 8px; font-size: 0.8rem; margin-left: 8px;">로그아웃</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside>
+            <ul class="nav-menu">
+                <li class="nav-item">업무관리</li>
+                <li class="nav-item">통계</li>
+                <li class="nav-item">정보관리</li>
+                <li class="nav-item">시스템</li>
+            </ul>
+
+            <div class="stat-card">
+                <div class="stat-title">오늘의 할일</div>
+                <div class="stat-value" style="font-size: 1.2rem;">5 건</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-title">개인 전광판</div>
+                <div class="stat-row">
+                    <span>평균통화</span>
+                    <span style="font-weight:700">00:03:12</span>
+                </div>
+                <div class="stat-row">
+                    <span>평균대기</span>
+                    <span style="font-weight:700">00:00:15</span>
+                </div>
+                <div class="stat-row">
+                    <span>응대율</span>
+                    <span style="font-weight:700; color:var(--success-green)">98%</span>
+                </div>
+                <div class="stat-row">
+                    <span>누적통화</span>
+                    <span style="font-weight:700">42건</span>
+                </div>
+            </div>
+        </aside>
+
+        <main>
+            <div class="main-col-left">
+                
+                <section class="card">
+                    <div class="card-header">
+                        <div class="card-title">📞 고객 정보</div>
+                        <div class="btn-group" style="margin:0;">
+                            <button class="btn-outline" style="padding:6px 12px;">초기화</button>
+                            <button class="btn-primary" style="padding:6px 12px;">고객조회</button>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>고객명</label>
+                            <div style="display:flex; gap:4px;">
+                                <input type="text" placeholder="홍길동" value="김철수">
+                                <button class="btn-outline">🔍</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>핸드폰</label>
+                            <input type="text" value="010-1234-5678">
+                        </div>
+                        <div class="form-group">
+                            <label>자택전화</label>
+                            <input type="text" placeholder="-">
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>수신여부</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item"><input type="checkbox" checked> 전체</label>
+                                <label class="checkbox-item"><input type="checkbox"> 전화</label>
+                                <label class="checkbox-item"><input type="checkbox"> SMS</label>
+                                <label class="checkbox-item"><input type="checkbox"> 이메일</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>이메일</label>
+                            <input type="text" value="customer@example.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label>기타1</label>
+                            <input type="text">
+                        </div>
+                        <div class="form-group">
+                            <label>기타2</label>
+                            <input type="text">
+                        </div>
+                        <div class="form-group">
+                            <label>기타3</label>
+                            <input type="text">
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>고객 메모</label>
+                            <textarea placeholder="특이사항 입력">VIP 고객, 지난번 요금 문의 이력 있음.</textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card" style="flex:1;">
+                    <div class="tabs">
+                        <div class="tab active">상담이력</div>
+                        <div class="tab">재통화/콜백</div>
+                        <div class="tab">채널이력</div>
+                        <div class="tab">TODO리스트</div>
+                    </div>
+                    
+                    <div style="overflow-x:auto;">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>상담일자</th>
+                                    <th>상담사</th>
+                                    <th>상담유형(대)</th>
+                                    <th>상담유형(중)</th>
+                                    <th>처리시간</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>2025-12-03 14:00</td>
+                                    <td>김상담</td>
+                                    <td><span class="badge badge-blue">요금문의</span></td>
+                                    <td>청구서발송</td>
+                                    <td>00:05:20</td>
+                                </tr>
+                                <tr>
+                                    <td>2025-12-01 10:30</td>
+                                    <td>박상담</td>
+                                    <td><span class="badge badge-gray">일반문의</span></td>
+                                    <td>단순안내</td>
+                                    <td>00:02:10</td>
+                                </tr>
+                                <tr><td>...</td><td></td><td></td><td></td><td></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <div class="main-col-right">
+                <section class="card" style="height: 100%; display: flex; flex-direction: column;">
+                    <div class="card-header">
+                        <div class="card-title">📝 상담 등록</div>
+                        <span class="badge badge-blue" style="font-size:0.8rem;">녹취 중</span>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>통화결과</label>
+                        <select>
+                            <option>-- 선택 --</option>
+                            <option selected>완료</option>
+                            <option>재통화예정</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>통화유형</label>
+                        <input type="text" value="인바운드" readonly>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>상담유형</label>
+                        <div style="display: flex; gap: 4px;">
+                            <select style="flex:1;"><option>대분류</option></select>
+                            <select style="flex:1;"><option>중분류</option></select>
+                            <select style="flex:1;"><option>소분류</option></select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>문의 내용</label>
+                        <textarea style="height: 100px;">이번 달 요금이 평소보다 많이 나와서 확인 요청함.</textarea>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>조치 내용</label>
+                        <textarea style="height: 100px;">부가서비스 가입 내역 확인 후 안내. 해지 절차 문자 발송함.</textarea>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label>예약일시</label>
+                        <div style="display: flex; gap: 4px;">
+                            <input type="checkbox">
+                            <input type="text" placeholder="YYYY-MM-DD" style="flex:1;">
+                            <input type="text" placeholder="HH:MM" style="width: 80px;">
+                        </div>
+                    </div>
+
+                    <div class="btn-group" style="margin-top: auto;">
+                        <button class="btn btn-secondary">저장</button>
+                        <button class="btn btn-primary">저장후 대기</button>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
