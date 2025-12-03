@@ -16,6 +16,7 @@
             --border-color: #e2e8f0;
             --danger-red: #ef4444;
             --success-green: #10b981;
+            --warning-orange: #f59e0b;
             --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
@@ -345,6 +346,9 @@
         }
         .badge-blue { background: var(--primary-light); color: var(--primary-blue); }
         .badge-gray { background: #f1f5f9; color: var(--text-gray); }
+        .badge-red { background: #fef2f2; color: var(--danger-red); }
+        .badge-green { background: #f0fdf4; color: var(--success-green); }
+        .badge-orange { background: #fffbeb; color: var(--warning-orange); }
 
         /* --- Tabs --- */
         .tabs {
@@ -367,6 +371,160 @@
             color: var(--primary-blue);
             border-bottom-color: var(--primary-blue);
         }
+
+        /* --- Customer Detail Panel --- */
+        .customer-detail {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .customer-detail.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .customer-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .customer-detail-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .churn-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .churn-high {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            color: var(--danger-red);
+            border: 1px solid #fecaca;
+        }
+
+        .churn-low {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            color: var(--success-green);
+            border: 1px solid #bbf7d0;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .detail-item {
+            background: white;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            color: var(--text-gray);
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* --- Customer Text (Consultation Log) --- */
+        .consultation-log {
+            grid-column: span 4;
+            background: white;
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .consultation-log pre {
+            font-family: inherit;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: var(--text-dark);
+        }
+
+        /* --- Loading Spinner --- */
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .loading.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* --- Error Message --- */
+        .error-message {
+            display: none;
+            padding: 16px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            color: var(--danger-red);
+            margin-top: 16px;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* --- Animation for blink --- */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
     </style>
 </head>
 <body>
@@ -379,7 +537,7 @@
         <div class="call-controls">
             <div class="call-timer">
                 <span style="width: 10px; height: 10px; background: white; border-radius: 50%; animation: blink 1s infinite;"></span>
-                00:00:00
+                <span id="timer">00:00:00</span>
             </div>
             <button class="btn-control active">ON (대기)</button>
             <button class="btn-control">이석</button>
@@ -437,8 +595,8 @@
                     <div class="card-header">
                         <div class="card-title">📞 고객 정보</div>
                         <div class="btn-group" style="margin:0;">
-                            <button class="btn-outline" style="padding:6px 12px;">초기화</button>
-                            <button class="btn-primary" style="padding:6px 12px;">고객조회</button>
+                            <button class="btn-outline" style="padding:6px 12px;" onclick="resetForm()">초기화</button>
+                            <button class="btn-primary" style="padding:6px 12px;" onclick="searchCustomer()">고객조회</button>
                         </div>
                     </div>
 
@@ -446,17 +604,17 @@
                         <div class="form-group">
                             <label>고객명</label>
                             <div style="display:flex; gap:4px;">
-                                <input type="text" placeholder="홍길동" value="김철수">
-                                <button class="btn-outline">🔍</button>
+                                <input type="text" id="customerName" placeholder="이름 입력">
+                                <button class="btn-outline" onclick="searchCustomer()">🔍</button>
                             </div>
                         </div>
                         <div class="form-group">
                             <label>핸드폰</label>
-                            <input type="text" value="010-1234-5678">
+                            <input type="text" id="customerPhone" placeholder="010-0000-0000">
                         </div>
                         <div class="form-group">
                             <label>자택전화</label>
-                            <input type="text" placeholder="-">
+                            <input type="text" id="homePhone" placeholder="-">
                         </div>
 
                         <div class="form-group full-width">
@@ -471,25 +629,83 @@
 
                         <div class="form-group full-width">
                             <label>이메일</label>
-                            <input type="text" value="customer@example.com">
+                            <input type="text" id="customerEmail" placeholder="example@email.com">
                         </div>
 
                         <div class="form-group">
-                            <label>기타1</label>
-                            <input type="text">
+                            <label>고객ID</label>
+                            <input type="text" id="customerId" placeholder="-" readonly style="background:#f1f5f9;">
                         </div>
                         <div class="form-group">
-                            <label>기타2</label>
-                            <input type="text">
+                            <label>계약유형</label>
+                            <input type="text" id="contractType" placeholder="-" readonly style="background:#f1f5f9;">
                         </div>
                         <div class="form-group">
-                            <label>기타3</label>
-                            <input type="text">
+                            <label>가입기간</label>
+                            <input type="text" id="tenure" placeholder="-" readonly style="background:#f1f5f9;">
                         </div>
 
                         <div class="form-group full-width">
                             <label>고객 메모</label>
-                            <textarea placeholder="특이사항 입력">VIP 고객, 지난번 요금 문의 이력 있음.</textarea>
+                            <textarea id="customerMemo" placeholder="특이사항 입력"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div class="error-message" id="errorMessage"></div>
+
+                    <!-- Customer Detail Panel -->
+                    <div class="customer-detail" id="customerDetail">
+                        <div class="customer-detail-header">
+                            <div class="customer-detail-title">📊 고객 상세 정보</div>
+                            <div class="churn-indicator" id="churnIndicator">
+                                <span id="churnIcon">⚠️</span>
+                                <span id="churnText">이탈 위험</span>
+                            </div>
+                        </div>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <div class="detail-label">성별</div>
+                                <div class="detail-value" id="detailGender">-</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">시니어 여부</div>
+                                <div class="detail-value" id="detailSenior">-</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">월 요금</div>
+                                <div class="detail-value" id="detailMonthly">-</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">총 요금</div>
+                                <div class="detail-value" id="detailTotal">-</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">인터넷 서비스</div>
+                                <div class="detail-value" id="detailInternet">-</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">결제 방식</div>
+                                <div class="detail-value" id="detailPayment">-</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">문의 유형</div>
+                                <div class="detail-value" id="detailIssue">-</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">7일내 반복문의</div>
+                                <div class="detail-value" id="detailRepeat">-</div>
+                            </div>
+                            
+                            <div class="consultation-log">
+                                <div class="detail-label" style="margin-bottom: 8px;">📝 최근 상담 내역</div>
+                                <pre id="detailConsultation">-</pre>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -513,22 +729,10 @@
                                     <th>처리시간</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="historyTableBody">
                                 <tr>
-                                    <td>2025-12-03 14:00</td>
-                                    <td>김상담</td>
-                                    <td><span class="badge badge-blue">요금문의</span></td>
-                                    <td>청구서발송</td>
-                                    <td>00:05:20</td>
+                                    <td colspan="5" style="text-align:center; color:var(--text-gray);">고객을 조회해주세요.</td>
                                 </tr>
-                                <tr>
-                                    <td>2025-12-01 10:30</td>
-                                    <td>박상담</td>
-                                    <td><span class="badge badge-gray">일반문의</span></td>
-                                    <td>단순안내</td>
-                                    <td>00:02:10</td>
-                                </tr>
-                                <tr><td>...</td><td></td><td></td><td></td><td></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -544,7 +748,7 @@
 
                     <div class="form-group" style="margin-bottom: 12px;">
                         <label>통화결과</label>
-                        <select>
+                        <select id="callResult">
                             <option>-- 선택 --</option>
                             <option selected>완료</option>
                             <option>재통화예정</option>
@@ -553,34 +757,34 @@
 
                     <div class="form-group" style="margin-bottom: 12px;">
                         <label>통화유형</label>
-                        <input type="text" value="인바운드" readonly>
+                        <input type="text" id="callType" value="인바운드" readonly>
                     </div>
 
                     <div class="form-group" style="margin-bottom: 12px;">
                         <label>상담유형</label>
                         <div style="display: flex; gap: 4px;">
-                            <select style="flex:1;"><option>대분류</option></select>
-                            <select style="flex:1;"><option>중분류</option></select>
-                            <select style="flex:1;"><option>소분류</option></select>
+                            <select style="flex:1;" id="category1"><option>대분류</option><option>요금</option><option>품질</option><option>기타</option></select>
+                            <select style="flex:1;" id="category2"><option>중분류</option></select>
+                            <select style="flex:1;" id="category3"><option>소분류</option></select>
                         </div>
                     </div>
 
                     <div class="form-group" style="margin-bottom: 12px;">
                         <label>문의 내용</label>
-                        <textarea style="height: 100px;">이번 달 요금이 평소보다 많이 나와서 확인 요청함.</textarea>
+                        <textarea id="inquiryContent" style="height: 100px;" placeholder="문의 내용을 입력하세요..."></textarea>
                     </div>
 
                     <div class="form-group" style="margin-bottom: 12px;">
                         <label>조치 내용</label>
-                        <textarea style="height: 100px;">부가서비스 가입 내역 확인 후 안내. 해지 절차 문자 발송함.</textarea>
+                        <textarea id="actionContent" style="height: 100px;" placeholder="조치 내용을 입력하세요..."></textarea>
                     </div>
 
                     <div class="form-group" style="margin-bottom: 20px;">
                         <label>예약일시</label>
                         <div style="display: flex; gap: 4px;">
-                            <input type="checkbox">
-                            <input type="text" placeholder="YYYY-MM-DD" style="flex:1;">
-                            <input type="text" placeholder="HH:MM" style="width: 80px;">
+                            <input type="checkbox" id="reservationCheck">
+                            <input type="text" placeholder="YYYY-MM-DD" style="flex:1;" id="reservationDate">
+                            <input type="text" placeholder="HH:MM" style="width: 80px;" id="reservationTime">
                         </div>
                     </div>
 
@@ -592,5 +796,207 @@
             </div>
         </main>
     </div>
+
+    <script>
+        // API Base URL
+        const API_BASE = 'http://127.0.0.1:8000';
+
+        // Timer
+        let seconds = 0;
+        setInterval(() => {
+            seconds++;
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            document.getElementById('timer').textContent = 
+                `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }, 1000);
+
+        // 고객 조회 함수
+        async function searchCustomer() {
+            const name = document.getElementById('customerName').value.trim();
+            const phone = document.getElementById('customerPhone').value.trim();
+
+            if (!name && !phone) {
+                showError('고객명 또는 핸드폰 번호를 입력해주세요.');
+                return;
+            }
+
+            // UI 초기화
+            hideError();
+            hideDetail();
+            showLoading();
+
+            try {
+                // API 호출
+                const params = new URLSearchParams();
+                if (name) params.append('name', name);
+                if (phone) params.append('phone', phone);
+
+                const response = await fetch(`${API_BASE}/search/customer?${params.toString()}`);
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || '조회에 실패했습니다.');
+                }
+
+                const data = await response.json();
+                
+                if (data.count === 0) {
+                    throw new Error('해당 조건에 맞는 고객이 없습니다.');
+                }
+
+                // 첫 번째 고객 데이터 표시
+                displayCustomerData(data.customers[0]);
+                
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 고객 데이터 표시
+        function displayCustomerData(customer) {
+            // 기본 정보 채우기
+            document.getElementById('customerName').value = customer.customer_name || '';
+            document.getElementById('customerPhone').value = formatPhone(customer.phone_number) || '';
+            document.getElementById('customerId').value = customer.customerID || '';
+            document.getElementById('contractType').value = customer.Contract || '';
+            document.getElementById('tenure').value = customer.tenure ? `${customer.tenure}개월` : '';
+
+            // 상세 정보 채우기
+            document.getElementById('detailGender').textContent = customer.gender === 'True' || customer.gender === true ? '여성' : '남성';
+            document.getElementById('detailSenior').textContent = customer.SeniorCitizen === 'True' || customer.SeniorCitizen === true ? '예' : '아니오';
+            document.getElementById('detailMonthly').textContent = customer.MonthlyCharges ? `$${customer.MonthlyCharges}` : '-';
+            document.getElementById('detailTotal').textContent = customer.TotalCharges ? `$${customer.TotalCharges}` : '-';
+            document.getElementById('detailInternet').textContent = customer.InternetService || '-';
+            document.getElementById('detailPayment').textContent = customer.PaymentMethod || '-';
+            document.getElementById('detailIssue').textContent = customer.issue_category || '-';
+            document.getElementById('detailRepeat').textContent = customer.repeat_contacts_7d ? `${customer.repeat_contacts_7d}회` : '-';
+            document.getElementById('detailConsultation').textContent = customer.customer_text || '상담 내역이 없습니다.';
+
+            // 이탈 위험 표시
+            const churnIndicator = document.getElementById('churnIndicator');
+            const churnIcon = document.getElementById('churnIcon');
+            const churnText = document.getElementById('churnText');
+            
+            if (customer.Churn === 1 || customer.Churn === '1' || customer.label === 1) {
+                churnIndicator.className = 'churn-indicator churn-high';
+                churnIcon.textContent = '⚠️';
+                churnText.textContent = '이탈 위험 고객';
+            } else {
+                churnIndicator.className = 'churn-indicator churn-low';
+                churnIcon.textContent = '✅';
+                churnText.textContent = '정상 고객';
+            }
+
+            // 상담유형 자동 선택
+            if (customer.issue_category) {
+                document.getElementById('category1').value = customer.issue_category;
+            }
+
+            // 상담이력 테이블 업데이트
+            updateHistoryTable(customer);
+
+            // 상세 정보 패널 표시
+            showDetail();
+        }
+
+        // 상담이력 테이블 업데이트
+        function updateHistoryTable(customer) {
+            const tbody = document.getElementById('historyTableBody');
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            
+            const callDuration = customer.call_duration_sec ? formatDuration(customer.call_duration_sec) : '00:00:00';
+            
+            tbody.innerHTML = `
+                <tr>
+                    <td>${dateStr}</td>
+                    <td>관리자01</td>
+                    <td><span class="badge ${customer.issue_category === '요금' ? 'badge-orange' : 'badge-blue'}">${customer.issue_category || '일반'}</span></td>
+                    <td>상담진행</td>
+                    <td>${callDuration}</td>
+                </tr>
+            `;
+        }
+
+        // 전화번호 포맷팅
+        function formatPhone(phone) {
+            if (!phone) return '';
+            const cleaned = String(phone).replace(/\D/g, '');
+            if (cleaned.length === 11) {
+                return `${cleaned.slice(0,3)}-${cleaned.slice(3,7)}-${cleaned.slice(7)}`;
+            }
+            return phone;
+        }
+
+        // 통화시간 포맷팅
+        function formatDuration(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        // 폼 초기화
+        function resetForm() {
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('homePhone').value = '';
+            document.getElementById('customerEmail').value = '';
+            document.getElementById('customerId').value = '';
+            document.getElementById('contractType').value = '';
+            document.getElementById('tenure').value = '';
+            document.getElementById('customerMemo').value = '';
+            document.getElementById('inquiryContent').value = '';
+            document.getElementById('actionContent').value = '';
+            
+            hideDetail();
+            hideError();
+            
+            document.getElementById('historyTableBody').innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align:center; color:var(--text-gray);">고객을 조회해주세요.</td>
+                </tr>
+            `;
+        }
+
+        // UI 헬퍼 함수들
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = '❌ ' + message;
+            errorEl.classList.add('show');
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+
+        function showDetail() {
+            document.getElementById('customerDetail').classList.add('show');
+        }
+
+        function hideDetail() {
+            document.getElementById('customerDetail').classList.remove('show');
+        }
+
+        // Enter 키로 검색
+        document.getElementById('customerName').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchCustomer();
+        });
+        document.getElementById('customerPhone').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchCustomer();
+        });
+    </script>
 </body>
 </html>
