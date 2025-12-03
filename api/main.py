@@ -1,11 +1,11 @@
 # conda activate kt_cs_25.11-12
-# pip install flask
+# pip install fastapi uvicorn pandas
 
 # uvicorn main:app --reload
-# uvicorn app:app --host 127.0.0.1 --port 8000
+# uvicorn main:app --host 127.0.0.1 --port 8000
 
-
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import pandas as pd
 import os
@@ -13,9 +13,20 @@ import os
 app = FastAPI()
 
 # ─────────────────────────────
+# CORS 설정 (프론트엔드에서 API 호출 허용)
+# ─────────────────────────────
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 모든 origin 허용 (개발용)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ─────────────────────────────
 # 1) 서버 시작 시 CSV 한 번만 로드
 # ─────────────────────────────
-CSV_PATH = r"11.29_lgb_chan.csv"
+CSV_PATH = r"telco_with_name_phone.csv"
 
 if not os.path.exists(CSV_PATH):
     raise FileNotFoundError(f"CSV 파일을 찾을 수 없습니다: {CSV_PATH}")
@@ -29,7 +40,7 @@ except Exception:
 if "customerID" not in df.columns:
     raise ValueError("CSV에 'customerID' 컬럼이 없습니다.")
 
-df = df.set_index("customerID")
+df_indexed = df.set_index("customerID")
 
 
 # ─────────────────────────────
@@ -37,54 +48,89 @@ df = df.set_index("customerID")
 # ─────────────────────────────
 @app.get("/")
 def root():
-    return {"message": "CSV 미리보기는 /load-csv, 고객 조회는 /customer/{customer_id} 를 사용하세요."}
+    return {"message": "고객 조회 API - /search/customer?name=이름&phone=전화번호"}
 
 
 # ─────────────────────────────
-# 3) CSV 미리보기 (그냥 확인용)
+# 3) CSV 미리보기 (확인용)
 # ─────────────────────────────
 @app.get("/load-csv")
 def load_csv():
-    preview = df.reset_index().head().to_dict(orient="records")
+    preview = df.head().to_dict(orient="records")
     return {
         "filename": CSV_PATH,
         "rows": len(df),
-        "cols": list(df.reset_index().columns),
+        "cols": list(df.columns),
         "preview": preview
     }
 
 
 # ─────────────────────────────
-# 4) 핵심: customerID로 행 조회하는 API
+# 4) customerID로 행 조회하는 API
 # ─────────────────────────────
 @app.get("/customer/{customer_id}")
 def get_customer(customer_id: str):
     """
-    예: GET /customer/1113-IUJYX
+    예: GET /customer/7590-VHVEG
     """
-    if customer_id not in df.index:
-        # 없는 ID면 404
+    if customer_id not in df_indexed.index:
         raise HTTPException(status_code=404, detail="해당 customerID가 없습니다.")
 
-    row = df.loc[customer_id]
+    row = df_indexed.loc[customer_id]
 
-    # 중복 없이 unique하면 row는 Series, 중복이면 DataFrame이 될 수 있음
     if isinstance(row, pd.Series):
         data = row.to_dict()
         data["customerID"] = customer_id
         return data
     else:
-        # 혹시 같은 customerID가 여러 개면 리스트로 반환
         records = row.reset_index().to_dict(orient="records")
         return {"count": len(records), "rows": records}
 
-# 스프링이 호출하는 엔드포인트
+
+# ─────────────────────────────
+# 5) 고객명 + 전화번호로 검색하는 API
+# ─────────────────────────────
+@app.get("/search/customer")
+def search_customer(
+    name: str = Query(None, description="고객명"),
+    phone: str = Query(None, description="전화번호")
+):
+    """
+    고객명과 전화번호로 고객을 검색합니다.
+    예: GET /search/customer?name=조하은&phone=01043033054
+    """
+    if not name and not phone:
+        raise HTTPException(status_code=400, detail="고객명 또는 전화번호를 입력해주세요.")
+    
+    result = df.copy()
+    
+    # 고객명으로 필터링
+    if name:
+        result = result[result["customer_name"].str.contains(name, na=False)]
+    
+    # 전화번호로 필터링 (하이픈 제거 후 비교)
+    if phone:
+        phone_clean = phone.replace("-", "")
+        result = result[result["phone_number"].astype(str).str.replace("-", "").str.contains(phone_clean, na=False)]
+    
+    if result.empty:
+        raise HTTPException(status_code=404, detail="해당 조건에 맞는 고객이 없습니다.")
+    
+    # 결과를 리스트로 반환
+    records = result.to_dict(orient="records")
+    
+    return {
+        "count": len(records),
+        "customers": records
+    }
+
+
+# ─────────────────────────────
+# 6) 스프링이 호출하는 요약 엔드포인트
+# ─────────────────────────────
 @app.get("/summary")
 def summary():
-    # 전체 고객 수
     total_customers = int(len(df))
-
-    # 이탈률(Churn 컬럼이 0/1이니까 mean() == 이탈 비율)
     churn_rate = float(df["Churn"].mean())
 
     return {
