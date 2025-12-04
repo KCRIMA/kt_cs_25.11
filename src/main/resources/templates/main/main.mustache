@@ -996,7 +996,7 @@
             <button class="btn-control">협의</button>
             <button class="btn-control">호전환</button>
             <button class="btn-control">걸기</button>
-            <button class="btn-control" style="color: var(--danger-red); border-color: var(--danger-red);">끊기</button>
+            <button class="btn-control" id="endCallBtn" style="color: var(--danger-red); border-color: var(--danger-red);" onclick="endCall()">끊기</button>
         </div>
         
         <div style="font-size: 0.9rem; color: var(--text-gray);">
@@ -1395,14 +1395,39 @@
 
         // Timer
         let seconds = 0;
-        setInterval(() => {
-            seconds++;
+        let timerInterval = null;
+
+        function startTimer() {
+            if (timerInterval) return; // 이미 실행 중이면 무시
+            timerInterval = setInterval(() => {
+                seconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
             const h = Math.floor(seconds / 3600);
             const m = Math.floor((seconds % 3600) / 60);
             const s = seconds % 60;
             document.getElementById('timer').textContent = 
                 `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        }, 1000);
+        }
+
+        function endCall() {
+            // 타이머 중지
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            // 타이머 0으로 초기화
+            seconds = 0;
+            updateTimerDisplay();
+            // 3초 뒤 다시 타이머 시작
+            setTimeout(startTimer, 3000);
+        }
+
+        // 페이지 로드 후 3초 뒤에 타이머 시작
+        setTimeout(startTimer, 3000);
 
         // Main Tab 전환
         function switchMainTab(tabId) {
