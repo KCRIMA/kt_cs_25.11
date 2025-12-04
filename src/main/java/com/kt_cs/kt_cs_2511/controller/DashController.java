@@ -34,15 +34,36 @@ public class DashController {
         String searchKeyword = (customerId == null) ? "" : customerId.trim();
         model.addAttribute("searchKeyword", searchKeyword);
 
-        // 3) 검색을 했는지?
+        // 3) 검색 여부
         boolean hasSearched = !searchKeyword.isEmpty();
         boolean hasCustomer = false;
 
-        // 4) FastAPI 에서 /customer/{id} 조회
+        // ─────────────────────────────
+        // 🔹 이탈 위험도 관련 기본값 세팅 (항상 필요)
+        //    - 검색 안 했을 때 / 못 찾았을 때도 Mustache가 변수 찾을 수 있게
+        // ─────────────────────────────
+        double circumference = 2 * Math.PI * 36; // r=36 → 약 226.19
+        model.addAttribute("gaugeOffset", circumference); // 0%로 보이게
+        model.addAttribute("negProb", 0.0);
+        model.addAttribute("negProbPercent", "-");
+        model.addAttribute("riskLabel", "-");
+        model.addAttribute("riskColor", "green");
+
+        // 4) 검색을 한 경우에만 FastAPI 호출
         if (hasSearched) {
             try {
-                // FastAPI: GET http://127.0.0.1:8000/customer/{customer_id}
-                Map<String, Object> customerInfo = dashService.getCustomerById(searchKeyword);
+                Map<String, Object> customerInfo;
+
+                // 숫자 8~12자리면 전화번호로 간주 (예: 01013317181)
+                boolean looksLikePhone = searchKeyword.matches("^[0-9]{8,12}$");
+
+                if (looksLikePhone) {
+                    // FastAPI: GET /contact/{contact_number}
+                    customerInfo = dashService.getCustomerByContact(searchKeyword);
+                } else {
+                    // FastAPI: GET /customer/{customer_id}
+                    customerInfo = dashService.getCustomerById(searchKeyword);
+                }
 
                 if (customerInfo != null && !customerInfo.isEmpty()) {
                     hasCustomer = true;
@@ -56,34 +77,31 @@ public class DashController {
                     model.addAttribute("customer", customerInfo);
 
                     // tenure
-                    Object tenure = customerInfo.get("tenure");   // CSV에 컬럼명이 tenure 라고 가정
+                    Object tenure = customerInfo.get("tenure");
                     model.addAttribute("tenure", tenure);
 
                     // PaymentMethod
                     model.addAttribute("paymentMethod", customerInfo.get("PaymentMethod"));
 
-                    // =========================
-                    // 🔥 neg_prob 기반 이탈 위험도 추가 -> 변수 변경예정
-                    // =========================
-                    Object npObj = customerInfo.get("neg_prob");  // CSV 컬럼명 neg_prob
-                    double negProb = 0.0;
-                    if (npObj != null) {
+                    // ─────────────────────────────
+                    // 🔥 Churn_Probability 기반 이탈 위험도 계산
+                    // ─────────────────────────────
+                    Object probObj = customerInfo.get("Churn_Probability");
+                    double churnProb = 0.0;
+                    if (probObj != null) {
                         try {
-                            negProb = Double.parseDouble(npObj.toString());
+                            churnProb = Double.parseDouble(probObj.toString());
                         } catch (NumberFormatException ignored) {}
                     }
 
-                    // 0~1 -> 0~100%
-                    int negProbPercent = (int) Math.round(negProb * 100);
+                    int probPercent = (int) Math.round(churnProb * 100);
 
-                    // 위험 레벨 / 색상 결정
                     String riskLabel;
-                    String riskColor;   // green / orange / red
-
-                    if (negProb <= 0.50) {
+                    String riskColor;
+                    if (churnProb <= 0.50) {
                         riskLabel = "LOW RISK";
                         riskColor = "green";
-                    } else if (negProb <= 0.70) {
+                    } else if (churnProb <= 0.70) {
                         riskLabel = "MIDDLE RISK";
                         riskColor = "orange";
                     } else {
@@ -91,19 +109,16 @@ public class DashController {
                         riskColor = "red";
                     }
 
-                    // 게이지 stroke-dashoffset 계산
-                    double circumference = 2 * Math.PI * 36;  // r=36 이니까 약 226.19
-                    double gaugeOffset = circumference * (1 - negProb);
+                    double gaugeOffsetValue = circumference * (1 - churnProb);
 
-                    // 뷰로 전달
-                    model.addAttribute("negProb", negProb);                      // 필요하면 원래 값
-                    model.addAttribute("negProbPercent", negProbPercent + "%");  // "92%"
-                    model.addAttribute("riskLabel", riskLabel);                  // HIGH RISK 등
-                    model.addAttribute("riskColor", riskColor);                  // green/orange/red
-                    model.addAttribute("gaugeOffset", gaugeOffset);              // 게이지용
-                    // =========================
-
+                    // 뷰로 전달 (템플릿 변수 이름은 기존 그대로)
+                    model.addAttribute("negProb", churnProb);
+                    model.addAttribute("negProbPercent", probPercent + "%");
+                    model.addAttribute("riskLabel", riskLabel);
+                    model.addAttribute("riskColor", riskColor);
+                    model.addAttribute("gaugeOffset", gaugeOffsetValue);
                 }
+
             } catch (HttpClientErrorException e) {
                 if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
                     hasCustomer = false;
@@ -115,7 +130,6 @@ public class DashController {
                 e.printStackTrace();
             }
         }
-
 
         model.addAttribute("hasSearched", hasSearched);
         model.addAttribute("hasCustomer", hasCustomer);

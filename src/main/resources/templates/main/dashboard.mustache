@@ -147,12 +147,20 @@
             height: 40px;
             border-radius: 50%;
             border: none;
-            background: var(--accent-blue);
-            color: white;
-            font-size: 16px;
+            padding: 0;                    /* 이미지 딱 맞게 */
+            background: transparent;       /* PNG 자체 디자인 사용 */
             cursor: pointer;
             transition: transform 0.2s ease;
-            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
+            box-shadow: none;              /* 필요 없으면 제거, 유지하고 싶으면 남겨도 됨 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-btn .search-icon {
+            width: 25px;   /* PNG 크기에 맞게 조절 */
+            height: 25px;
+            display: block;
         }
 
         .search-btn:hover {
@@ -1005,12 +1013,14 @@
             <input
                     type="text"
                     name="customer_id"
-                    placeholder="전화번호 또는 고객명을 입력하세요. ex)1113-IUJYX, 2018-PZKMU"
+                    placeholder="전화번호 또는 고객명을 입력하세요. ex)1113-IUJYX, 1013317181"
                     aria-label="전화번호 검색"
                     value="{{searchKeyword}}"
 
             >
-            <button class="search-btn" type="submit" aria-label="검색">🔍</button>
+            <button class="search-btn" type="submit" aria-label="검색">
+                <img src="/img/search_button.png" alt="검색" class="search-icon">
+            </button>
         </form>
 
 
