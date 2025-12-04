@@ -10,5 +10,10 @@ public class MainController {
     public String main() {
         return "main/main";
     }
+
+    @GetMapping("/")
+    public String root() {
+        return "redirect:/main";
+    }
 }
 

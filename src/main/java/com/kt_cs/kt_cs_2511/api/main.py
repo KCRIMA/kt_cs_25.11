@@ -110,8 +110,20 @@ def search_customer(
     
     # 전화번호로 필터링 (하이픈 제거 후 비교)
     if phone:
-        phone_clean = phone.replace("-", "")
-        result = result[result["contact_number"].astype(str).str.replace("-", "").str.contains(phone_clean, na=False)]
+            # 1) 프론트에서 넘어온 값: 하이픈 제거
+            phone_clean = phone.replace("-", "")
+
+            # 2) 전화번호로 필터링 (맨 앞 0 제거 + 하이픈 제거 후 비교)
+            phone_clean = phone_clean.lstrip("0")
+
+            # 3) CSV 쪽도 동일한 기준으로 정규화해서 비교
+            result = result[
+                result["contact_number"]
+                    .astype(str)
+                    .str.replace("-", "")
+                    .str.lstrip("0")         # 혹시 모를 0 제거
+                    .str.contains(phone_clean, na=False)
+            ]
     
     if result.empty:
         raise HTTPException(status_code=404, detail="해당 조건에 맞는 고객이 없습니다.")

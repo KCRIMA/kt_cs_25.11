@@ -9,7 +9,7 @@
             --bg-color: #f0f2f5;
             --sidebar-bg: #ffffff;
             --card-bg: #ffffff;
-            --primary-blue: #3b82f6;
+            --primary-blue: #333337;
             --primary-light: #eff6ff;
             --text-dark: #1e293b;
             --text-gray: #64748b;
@@ -618,7 +618,7 @@
            ============================================ */
         .toast-container {
             position: fixed;
-            top: 90px;
+            top: 73px;
             right: 24px;
             z-index: 1000;
             display: flex;
@@ -627,8 +627,9 @@
         }
 
         .toast {
+            position: relative;       /* X 버튼 절대 위치용 */
             display: flex;
-            align-items: center;
+            align-items: flex-start;            /* 아이콘을 위로 붙이기 */
             gap: 14px;
             padding: 16px 20px;
             background: white;
@@ -662,6 +663,48 @@
             flex-shrink: 0;
             animation: iconPulse 1.5s infinite;
         }
+        /* =============================
+   콜 요청 토스트 전용 스타일
+   ============================= */
+        .toast.call-request {
+            border-left: 4px solid var(--accent-blue);
+            cursor: default;
+        }
+
+        .toast.call-request .toast-icon {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .toast.call-request h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .toast.call-request p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* 전화 대기 리스트를 2열 그리드로 */
+        .call-wait-list {
+            margin-top: 10px;
+            padding-left: 0;
+            list-style: none;
+            font-size: 12px;
+            color: var(--text-secondary);
+
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2열 */
+            column-gap: 24px;
+            row-gap: 4px;
+        }
+
+        .call-wait-list li {
+            white-space: nowrap;
+        }
+
 
         @keyframes iconPulse {
             0%, 100% { transform: scale(1); }
@@ -693,6 +736,9 @@
         }
 
         .toast-close {
+            position: absolute;
+            top: 10px;
+            right: 13px;
             width: 24px;
             height: 24px;
             display: flex;
@@ -989,6 +1035,61 @@
         .copy-btn:hover {
             background: #0d9488;
         }
+
+        /* 로그인/로그아웃 버튼 호버 애니메이션 */
+        #authButton {
+            transition: all 0.2s;  /* 부드럽게 변하도록 */
+        }
+
+        #authButton:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-blue);
+            border-color: var(--primary-blue);
+        }
+
+        /* 로그인 드롭다운 메뉴 */
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: 32px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
+            display: none;
+            flex-direction: column;
+            width: 67px;
+            z-index: 999;
+        }
+
+        .dropdown-menu div {
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.8rem;
+        }
+
+        .dropdown-menu div:hover {
+            background: var(--primary-light);
+            color: var(--primary-blue);
+        }
+
+        /* 로그인 버튼 호버 */
+        #authButton {
+            transition: all 0.2s;
+        }
+
+        #authButton:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-blue);
+            border-color: var(--primary-blue);
+        }
+
+        /* 드롭다운에서 첫 번째 항목 아래에만 구분선 */
+        .dropdown-menu div + div {
+            border-top: 1px solid #e5e7eb;   /* 연한 회색 구분선 */
+        }
+
     </style>
 </head>
 <body>
@@ -1006,16 +1107,36 @@
                 <span style="width: 10px; height: 10px; background: white; border-radius: 50%; animation: blink 1s infinite;"></span>
                 <span id="timer">00:00:00</span>
             </div>
-            <button class="btn-control active">ON (대기)</button>
-            <button class="btn-control">이석</button>
-            <button class="btn-control">보류</button>
-            <button class="btn-control">걸기</button>
-            <button class="btn-control" id="answerCallBtn" style="color: var(--success-green); border-color: var(--success-green);" onclick="answerCall()">받기</button>
-            <button class="btn-control" id="endCallBtn" style="color: var(--danger-red); border-color: var(--danger-red);" onclick="endCall()">끊기</button>
+            <button class="btn-control active" id="btnReady">ON (대기)</button>
+            <button class="btn-control" id="btnAway">이석</button>
+            <button class="btn-control" id="btnHold">보류</button>
+            <button class="btn-control" id="btnDial">걸기</button>
+            <button class="btn-control" id="answerCallBtn"
+                    style="color: var(--success-green); border-color: var(--success-green);" onclick="answerCall()">받기</button>
+            <button class="btn-control" id="endCallBtn"
+                    style="color: var(--danger-red); border-color: var(--danger-red);" onclick="endCall()">끊기</button>
         </div>
-        
-        <div style="font-size: 0.9rem; color: var(--text-gray);">
-            관리자01(2001)님 <button class="btn-outline" style="padding: 4px 8px; font-size: 0.8rem; margin-left: 8px;">로그아웃</button>
+
+        <div id="userInfo" style="font-size: 0.9rem; color: var(--text-gray); position: relative;">
+
+            <!-- 사용자 이름 -->
+            <span id="userName">홍길동(2001)님</span>
+
+            <!-- 로그아웃 버튼 -->
+            <button
+                    id="authButton"
+                    class="btn-outline"
+                    style="padding: 4px 8px; font-size: 0.8rem; margin-left: 8px;"
+                    onclick="logoutOrOpenMenu()"
+            >
+                로그아웃
+            </button>
+
+            <!-- 로그인 드롭다운 메뉴 -->
+            <div id="loginDropdown" class="dropdown-menu">
+                <div onclick="loginAsUser()">홍길동</div>
+                <div onclick="goAdminPage()">admin</div>
+            </div>
         </div>
     </header>
 
@@ -1034,14 +1155,14 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-title">개인 전광판</div>
+                <div class="stat-title">오늘의 성과</div>
                 <div class="stat-row">
                     <span>평균통화</span>
-                    <span style="font-weight:700">00:03:12</span>
+                    <span style="font-weight:700" id="avgCallTime">00:00:00</span>
                 </div>
                 <div class="stat-row">
                     <span>평균대기</span>
-                    <span style="font-weight:700">00:00:15</span>
+                    <span style="font-weight:700" id="avgWaitTime">00:00:00</span>
                 </div>
                 <div class="stat-row">
                     <span>응대율</span>
@@ -1049,7 +1170,7 @@
                 </div>
                 <div class="stat-row">
                     <span>누적통화</span>
-                    <span style="font-weight:700">42건</span>
+                    <span style="font-weight:700" id="totalCallCount">0건</span>
                 </div>
             </div>
         </aside>
@@ -1201,9 +1322,9 @@
                                         <tr>
                                             <th>상담일자</th>
                                             <th>상담사</th>
-                                            <th>상담유형(대)</th>
-                                            <th>상담유형(중)</th>
-                                            <th>처리시간</th>
+                                            <th>문의유형</th>
+                                            <th>처리상태</th>
+                                            <th>소요시간</th>
                                         </tr>
                                     </thead>
                                     <tbody id="historyTableBody">
@@ -1405,9 +1526,34 @@
         const API_BASE = 'http://127.0.0.1:8000';
         let currentCustomer = null;
 
+        // 🔹 전화 대기 큐
+        let callQueue = [
+            '010-0525-0309',
+            '010-1331-7181',
+            '010-8400-8327',
+            '010-0299-5900'
+        ];
+
         // Timer
         let seconds = 0;
         let timerInterval = null;
+
+        //  오늘 세션 기준 통계 (프론트에서만 관리)
+        let totalCallSeconds = 0;  // 통화 누적
+        let callCount = 0;         // 통화 건수
+        let totalWaitSeconds = 0;   // 대기 누적
+        let waitCount = 0;         // 대기 건수
+        let waitStartTime = null;  // 대기 시작 시각
+
+        //  방금 조회한 고객의 히스토리 row를 기억
+        let currentHistoryRow = null;
+
+        // 대기 버튼 눌렀을 때
+        document.getElementById('btnReady').addEventListener('click', () => {
+            waitStartTime = new Date();  // 대기 시작
+        });
+
+
 
         function startTimer() {
             if (timerInterval) return; // 이미 실행 중이면 무시
@@ -1428,10 +1574,36 @@
         // 받기 버튼 클릭 - 타이머 시작
         function answerCall() {
             startTimer();
+
+            //  대기시간 계산
+            if (waitStartTime) {
+                const now = new Date();
+                const waitSec = Math.round((now - waitStartTime) / 1000);
+                totalWaitSeconds += waitSec;
+                waitCount += 1;
+                waitStartTime = null;
+                updateWaitStatsUI();   // 화면 업데이트
+            }
+
+            // 🔹 현재 통화중인 번호 = 대기열 맨 앞 번호
+            const currentNumber = callQueue[0];
+            if (currentNumber) {
+                // 0) 이전 고객 이름/ID 등 검색 키 값 초기화
+                document.getElementById('customerName').value = '';
+                // 1) 고객 핸드폰 입력칸에 번호 넣고
+                document.getElementById('customerPhone').value = currentNumber;
+                // 2) 그 번호로 고객 조회 실행
+                searchCustomer();
+            }
+
+            hideCallRequestToast();   // 통화 중에는 토스트 숨김
         }
 
-        // 끊기 버튼 클릭 - 타이머 중지 및 초기화
+        // 끊기 버튼 클릭 - 타이머 중지 및 초기화 + 대기 목록 갱신
         function endCall() {
+            //  이번 통화 길이 저장
+            const callDurationThisCall = seconds;  // 이번 통화 초 단위
+
             // 타이머 중지
             if (timerInterval) {
                 clearInterval(timerInterval);
@@ -1440,7 +1612,36 @@
             // 타이머 0으로 초기화
             seconds = 0;
             updateTimerDisplay();
+
+            // 🔹 통화 통계 누적
+            if (callDurationThisCall > 0) {
+                totalCallSeconds += callDurationThisCall;
+                callCount += 1;
+                updateCallStatsUI();   // 평균 통화 시간 화면 갱신
+            }
+
+            //  히스토리 테이블의 소요시간과 상태를 실제 통화시간으로 업데이트
+            if (currentHistoryRow) {
+                const tds = currentHistoryRow.querySelectorAll('td');
+                // 4번째 칸(처리상태)
+                tds[3].textContent = '상담종료';
+                // 5번째 칸(소요시간)
+                tds[4].textContent = formatDuration(callDurationThisCall);
+            }
+
+            // 🔹 통화가 끝났으니, 맨 앞 전화번호 제거
+            if (callQueue.length > 0) {
+                callQueue.shift();   // 첫 번째 번호 제거
+            }
+
+            // 🔹 남은 번호가 있으면 토스트 다시 표시
+            if (callQueue.length > 0) {
+                showCallRequestToast();
+            } else {
+                hideCallRequestToast();
+            }
         }
+
 
         // Main Tab 전환
         function switchMainTab(tabId) {
@@ -1631,12 +1832,24 @@
             });
         }
 
+        function normalizePhoneForSearch(phone) {
+            if (!phone) return '';
+
+            // 1) 숫자만 남기기
+            let digits = phone.replace(/\D/g, '');  // 010-0000-0000 -> 01000000000
+
+            // 2) 맨 앞 0들 제거 (01000000000 -> 1000000000)
+            digits = digits.replace(/^0+/, '');
+
+            return digits;
+        }
+
         // 고객 조회
         async function searchCustomer() {
             const name = document.getElementById('customerName').value.trim();
-            const phone = document.getElementById('customerPhone').value.trim();
+            const rawPhone = document.getElementById('customerPhone').value.trim();
 
-            if (!name && !phone) {
+            if (!name && !rawPhone) {
                 showError('고객명 또는 핸드폰 번호를 입력해주세요.');
                 return;
             }
@@ -1648,7 +1861,11 @@
             try {
                 const params = new URLSearchParams();
                 if (name) params.append('name', name);
-                if (phone) params.append('phone', phone);
+                // 🔹 여기서만 0 + 하이픈 제거해서 API로 보냄
+                if (rawPhone) {
+                    const normalized = normalizePhoneForSearch(rawPhone); // 예: 010-0000-0000 -> 1000000000
+                    params.append('phone', normalized);
+                }
 
                 const response = await fetch(`${API_BASE}/search/customer?${params.toString()}`);
                 
@@ -1745,24 +1962,43 @@
             const tbody = document.getElementById('historyTableBody');
             const now = new Date();
             const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-            const callDuration = customer.call_duration_sec ? formatDuration(customer.call_duration_sec) : '00:00:00';
-            
-            tbody.innerHTML = `
-                <tr>
-                    <td>${dateStr}</td>
-                    <td>관리자01</td>
-                    <td><span class="badge ${customer.issue_category === '요금' ? 'badge-orange' : 'badge-blue'}">${customer.issue_category || '일반'}</span></td>
-                    <td>상담진행</td>
-                    <td>${callDuration}</td>
-                </tr>
+
+            // "고객을 조회해주세요." 안내 문구가 있으면 제거
+            if (tbody.children.length === 1 && tbody.children[0].children.length === 1) {
+                tbody.innerHTML = '';
+            }
+
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+                <td>${dateStr}</td>
+                <td>홍길동</td>
+                <td><span class="badge ${customer.issue_category === '요금' ? 'badge-orange' : 'badge-blue'}">${customer.issue_category || '일반'}</span></td>
+                <td>상담진행</td>
+                <td>통화중</td>
             `;
+
+            // 최신 통화를 맨 위에 쌓기 (아래로 쌓고 싶으면 appendChild로 바꾸면 됨)
+            if (tbody.firstChild) {
+                tbody.insertBefore(tr, tbody.firstChild);
+            } else {
+                tbody.appendChild(tr);
+            }
+
+            // 🔹 나중에 endCall에서 업데이트할 수 있도록 행을 기억
+            currentHistoryRow = tr;
         }
 
         function formatPhone(phone) {
             if (!phone) return '';
-            const cleaned = String(phone).replace(/\D/g, '');
-            if (cleaned.length === 11) {
-                return `${cleaned.slice(0,3)}-${cleaned.slice(3,7)}-${cleaned.slice(7)}`;
+            let digits = String(phone).replace(/\D/g, '');
+
+            // 🔹 CSV가 1000000000(10자리, 1로 시작) 형태면 0을 앞에 붙여줌 → 01000000000
+            if (digits.length === 10 && digits[0] === '1') {
+                digits = '0' + digits;
+            }
+            if (digits.length === 11) {
+                return `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}`;
             }
             return phone;
         }
@@ -1772,6 +2008,22 @@
             const m = Math.floor((seconds % 3600) / 60);
             const s = seconds % 60;
             return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function updateCallStatsUI() {
+            if (callCount === 0) return;
+
+            const avg = Math.round(totalCallSeconds / callCount);
+            document.getElementById('avgCallTime').textContent = formatDuration(avg);
+
+            // 🔹 누적통화 UI도 함께 갱신
+            document.getElementById('totalCallCount').textContent = callCount + '건';
+        }
+
+        function updateWaitStatsUI() {
+            if (waitCount === 0) return;
+            const avg = Math.round(totalWaitSeconds / waitCount);
+            document.getElementById('avgWaitTime').textContent = formatDuration(avg);
         }
 
         function resetForm() {
@@ -1817,6 +2069,138 @@
         document.getElementById('customerPhone').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') searchCustomer();
         });
+
+        let isLoggedIn = true;  // 초기 상태 = 로그인됨
+
+        // 로그아웃 OR 로그인 메뉴 오픈
+        function logoutOrOpenMenu() {
+            if (isLoggedIn) {
+                // 로그아웃 실행
+                logout();
+            } else {
+                // 로그인 드롭다운 열기
+                toggleDropdown();
+            }
+        }
+
+        // 로그아웃 기능
+        function logout() {
+            isLoggedIn = false;
+
+            // 이름 숨기기
+            document.getElementById('userName').style.display = 'none';
+
+            // 버튼을 "로그인 ⌵"으로 변경
+            const btn = document.getElementById('authButton');
+            btn.textContent = "로그인 ⌵";
+
+            // 드롭다운 닫기
+            document.getElementById('loginDropdown').style.display = 'none';
+        }
+
+        // 로그인 메뉴 열기/닫기
+        function toggleDropdown() {
+            const menu = document.getElementById('loginDropdown');
+            menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
+        }
+
+        // 홍길동 로그인
+        function loginAsUser() {
+            isLoggedIn = true;
+
+            // 이름 표시
+            document.getElementById('userName').style.display = 'inline';
+
+            // 버튼 텍스트 변경
+            const btn = document.getElementById('authButton');
+            btn.textContent = "로그아웃";
+
+            // 드롭다운 닫기
+            document.getElementById('loginDropdown').style.display = 'none';
+        }
+
+        // 관리자 페이지 이동
+        function goAdminPage() {
+            window.location.href = "/admin";   // 원하는 URL로 변경
+        }
+
+        // 바깥 클릭 시 드롭다운 닫기
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('loginDropdown');
+            const button = document.getElementById('authButton');
+
+            if (!dropdown.contains(event.target) && event.target !== button) {
+                dropdown.style.display = "none";
+            }
+        });
+
+        // =============================
+        // 콜 요청 토스트 (전화 요청중)
+        // =============================
+        function showCallRequestToast() {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            // 대기 고객이 없으면 아무것도 표시하지 않음
+            if (callQueue.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            // 기존 토스트 제거
+            container.innerHTML = '';
+
+            const toast = document.createElement('div');
+            toast.className = 'toast call-request';
+
+            // callQueue 배열 기준으로 li 동적 생성
+            const listItems = callQueue
+                    .map(num => `<li>${num}</li>`)
+                    .join('');
+
+            toast.innerHTML = `
+        <div class="toast-icon">📞</div>
+        <div class="toast-content">
+            <h4>대기 중인 고객</h4>
+            <p>아래 고객이 상담 연결을 기다리고 있습니다.</p>
+            <ul class="call-wait-list">
+                ${listItems}
+            </ul>
+        </div>
+        <button class="toast-close" onclick="hideCallRequestToast()">✕</button>
+    `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+        }
+
+        function hideCallRequestToast() {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            container.innerHTML = '';
+        }
+
+        // 페이지 로드 시 자동으로 "전화 요청중" 토스트 띄우기
+        document.addEventListener('DOMContentLoaded', () => {
+            showCallRequestToast();
+
+            // 통화 관련 버튼 누르면 토스트 닫기
+            const ids = ['btnReady', 'btnAway', 'btnHold', 'btnDial', 'answerCallBtn'];
+            ids.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.addEventListener('click', hideCallRequestToast);
+                }
+            });
+        });
+
+
+
+
+
     </script>
 </body>
 </html>

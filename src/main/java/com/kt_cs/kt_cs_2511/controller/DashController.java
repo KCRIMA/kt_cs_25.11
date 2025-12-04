@@ -138,8 +138,5 @@ public class DashController {
         return "main/dashboard";
     }
 
-    @GetMapping("/")
-    public String root() {
-        return "redirect:/dashboard";
-    }
+
 }
