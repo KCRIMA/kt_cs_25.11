@@ -519,6 +519,12 @@
             border: 1px solid #bbf7d0;
         }
 
+        .churn-medium {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            color: var(--warning-orange);
+            border: 1px solid #fcd34d;
+        }
+
         .detail-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -751,6 +757,16 @@
         .risk-score-card {
             background: linear-gradient(135deg, #fef2f2 0%, #fff 100%);
             border: 2px solid #fecaca;
+            transition: all 0.3s ease;
+        }
+
+        .risk-score-card.medium-risk {
+            background: linear-gradient(135deg, #fffbeb 0%, #fff 100%);
+            border: 2px solid #fcd34d;
+        }
+
+        .risk-score-card.medium-risk .risk-gauge-bg {
+            stroke: #fcd34d;
         }
 
         .risk-score-content {
@@ -1537,20 +1553,39 @@
             const offset = circumference - (riskScore / 100) * circumference;
             gauge.style.strokeDashoffset = offset;
             
+            // 게이지 색상 변경
+            if (riskScore >= 80) {
+                gauge.style.stroke = 'var(--danger-red)';
+            } else {
+                gauge.style.stroke = 'var(--warning-orange)';
+            }
+            
             document.getElementById('riskPercentage').textContent = riskScore + '%';
             document.getElementById('riskCustomerName').textContent = customer.customer_name + ' 고객';
             
-            // 위험 배지
+            // 퍼센트 색상 변경
+            const percentageEl = document.getElementById('riskPercentage');
+            if (riskScore >= 80) {
+                percentageEl.style.color = 'var(--danger-red)';
+            } else {
+                percentageEl.style.color = 'var(--warning-orange)';
+            }
+            
+            // 위험 배지: 80% 이상 HIGH RISK(빨강), 55%~79% MEDIUM RISK(주황)
             const badge = document.getElementById('riskBadge');
-            if (riskScore >= 70) {
+            const riskCard = document.querySelector('.risk-score-card');
+            const gaugeBg = document.querySelector('.risk-gauge-bg');
+            
+            if (riskScore >= 80) {
                 badge.textContent = 'HIGH RISK';
                 badge.className = 'badge badge-red';
-            } else if (riskScore >= 40) {
+                riskCard.classList.remove('medium-risk');
+                gaugeBg.style.stroke = '#fecaca';
+            } else {
                 badge.textContent = 'MEDIUM RISK';
                 badge.className = 'badge badge-orange';
-            } else {
-                badge.textContent = 'LOW RISK';
-                badge.className = 'badge badge-green';
+                riskCard.classList.add('medium-risk');
+                gaugeBg.style.stroke = '#fcd34d';
             }
 
             // 위험 요인
@@ -1663,25 +1698,34 @@
             const churnIcon = document.getElementById('churnIcon');
             const churnText = document.getElementById('churnText');
             
-            // 이탈 위험 고객 확인 (Predicted_Churn 또는 label 기준)
-            const isChurnRisk = customer.Predicted_Churn === 1 || customer.Predicted_Churn === '1' || customer.Predicted_Churn === 1.0 || customer.label === 1;
+            // 위험도 계산 (Churn_Probability 기준)
+            let riskScore = 0;
+            if (customer.Churn_Probability !== undefined && customer.Churn_Probability !== null) {
+                riskScore = Math.round(customer.Churn_Probability * 100);
+            } else if (customer.label === 1) {
+                riskScore = 85 + Math.floor(Math.random() * 10);
+            }
+            
+            // 55% 이상일 때만 이탈 위험으로 처리
+            const isChurnRisk = riskScore >= 55;
             
             if (isChurnRisk) {
-                churnIndicator.className = 'churn-indicator churn-high';
-                churnIcon.textContent = '⚠️';
-                churnText.textContent = '이탈 위험 고객';
+                // 80% 이상: 빨강, 55~79%: 주황
+                if (riskScore >= 80) {
+                    churnIndicator.className = 'churn-indicator churn-high';
+                    churnIcon.textContent = '🚨';
+                    churnText.textContent = '고위험 이탈 고객';
+                } else {
+                    churnIndicator.className = 'churn-indicator churn-medium';
+                    churnIcon.textContent = '⚠️';
+                    churnText.textContent = '이탈 위험 고객';
+                }
                 
                 // 이탈 위험 분석 탭 표시
                 showChurnTab();
                 updateChurnAnalysis(customer);
                 
-                // 위험도 계산 후 토스트 표시
-                let riskScore;
-                if (customer.Churn_Probability !== undefined && customer.Churn_Probability !== null) {
-                    riskScore = Math.round(customer.Churn_Probability * 100);
-                } else {
-                    riskScore = customer.label === 1 ? 85 + Math.floor(Math.random() * 10) : 30 + Math.floor(Math.random() * 20);
-                }
+                // 토스트 표시
                 showChurnToast(customer, riskScore);
             } else {
                 churnIndicator.className = 'churn-indicator churn-low';
