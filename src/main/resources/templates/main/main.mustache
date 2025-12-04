@@ -1061,9 +1061,9 @@
                         <section class="card">
                             <div class="card-header">
                                 <div class="card-title">📞 고객 정보</div>
-                                <div class="btn-group" style="margin:0;">
-                                    <button class="btn-outline" style="padding:6px 12px;" onclick="resetForm()">초기화</button>
-                                    <button class="btn-primary" style="padding:6px 12px;" onclick="searchCustomer()">고객조회</button>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn-control" onclick="resetForm()">초기화</button>
+                                    <button class="btn-control active" onclick="searchCustomer()">고객조회</button>
                                 </div>
                             </div>
 
@@ -1204,7 +1204,7 @@
                     </div>
 
                     <div class="main-col-right">
-                        <section class="card" style="height: 100%; display: flex; flex-direction: column;">
+                        <section class="card" style="height: 100%; display: flex; flex-direction: column; overflow-y: auto;">
                             <div class="card-header">
                                 <div class="card-title">📝 상담 등록</div>
                                 <span class="badge badge-blue" style="font-size:0.8rem;">녹취 중</span>
