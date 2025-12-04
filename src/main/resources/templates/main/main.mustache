@@ -519,6 +519,12 @@
             border: 1px solid #bbf7d0;
         }
 
+        .churn-medium {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            color: var(--warning-orange);
+            border: 1px solid #fcd34d;
+        }
+
         .detail-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -751,6 +757,16 @@
         .risk-score-card {
             background: linear-gradient(135deg, #fef2f2 0%, #fff 100%);
             border: 2px solid #fecaca;
+            transition: all 0.3s ease;
+        }
+
+        .risk-score-card.medium-risk {
+            background: linear-gradient(135deg, #fffbeb 0%, #fff 100%);
+            border: 2px solid #fcd34d;
+        }
+
+        .risk-score-card.medium-risk .risk-gauge-bg {
+            stroke: #fcd34d;
         }
 
         .risk-score-content {
@@ -993,10 +1009,9 @@
             <button class="btn-control active">ON (대기)</button>
             <button class="btn-control">이석</button>
             <button class="btn-control">보류</button>
-            <button class="btn-control">협의</button>
-            <button class="btn-control">호전환</button>
             <button class="btn-control">걸기</button>
-            <button class="btn-control" style="color: var(--danger-red); border-color: var(--danger-red);">끊기</button>
+            <button class="btn-control" id="answerCallBtn" style="color: var(--success-green); border-color: var(--success-green);" onclick="answerCall()">받기</button>
+            <button class="btn-control" id="endCallBtn" style="color: var(--danger-red); border-color: var(--danger-red);" onclick="endCall()">끊기</button>
         </div>
         
         <div style="font-size: 0.9rem; color: var(--text-gray);">
@@ -1062,19 +1077,16 @@
                         <section class="card">
                             <div class="card-header">
                                 <div class="card-title">📞 고객 정보</div>
-                                <div class="btn-group" style="margin:0;">
-                                    <button class="btn-outline" style="padding:6px 12px;" onclick="resetForm()">초기화</button>
-                                    <button class="btn-primary" style="padding:6px 12px;" onclick="searchCustomer()">고객조회</button>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn-control" onclick="resetForm()">초기화</button>
+                                    <button class="btn-control active" onclick="searchCustomer()">고객조회</button>
                                 </div>
                             </div>
 
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label>고객명</label>
-                                    <div style="display:flex; gap:4px;">
-                                        <input type="text" id="customerName" placeholder="이름 입력">
-                                        <button class="btn-outline" onclick="searchCustomer()">🔍</button>
-                                    </div>
+                                    <input type="text" id="customerName" placeholder="이름 입력">
                                 </div>
                                 <div class="form-group">
                                     <label>핸드폰</label>
@@ -1205,7 +1217,7 @@
                     </div>
 
                     <div class="main-col-right">
-                        <section class="card" style="height: 100%; display: flex; flex-direction: column;">
+                        <section class="card" style="height: 100%; display: flex; flex-direction: column; overflow-y: auto;">
                             <div class="card-header">
                                 <div class="card-title">📝 상담 등록</div>
                                 <span class="badge badge-blue" style="font-size:0.8rem;">녹취 중</span>
@@ -1395,14 +1407,40 @@
 
         // Timer
         let seconds = 0;
-        setInterval(() => {
-            seconds++;
+        let timerInterval = null;
+
+        function startTimer() {
+            if (timerInterval) return; // 이미 실행 중이면 무시
+            timerInterval = setInterval(() => {
+                seconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
             const h = Math.floor(seconds / 3600);
             const m = Math.floor((seconds % 3600) / 60);
             const s = seconds % 60;
             document.getElementById('timer').textContent = 
                 `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        }, 1000);
+        }
+
+        // 받기 버튼 클릭 - 타이머 시작
+        function answerCall() {
+            startTimer();
+        }
+
+        // 끊기 버튼 클릭 - 타이머 중지 및 초기화
+        function endCall() {
+            // 타이머 중지
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            // 타이머 0으로 초기화
+            seconds = 0;
+            updateTimerDisplay();
+        }
 
         // Main Tab 전환
         function switchMainTab(tabId) {
@@ -1512,20 +1550,39 @@
             const offset = circumference - (riskScore / 100) * circumference;
             gauge.style.strokeDashoffset = offset;
             
+            // 게이지 색상 변경
+            if (riskScore >= 80) {
+                gauge.style.stroke = 'var(--danger-red)';
+            } else {
+                gauge.style.stroke = 'var(--warning-orange)';
+            }
+            
             document.getElementById('riskPercentage').textContent = riskScore + '%';
             document.getElementById('riskCustomerName').textContent = customer.customer_name + ' 고객';
             
-            // 위험 배지
+            // 퍼센트 색상 변경
+            const percentageEl = document.getElementById('riskPercentage');
+            if (riskScore >= 80) {
+                percentageEl.style.color = 'var(--danger-red)';
+            } else {
+                percentageEl.style.color = 'var(--warning-orange)';
+            }
+            
+            // 위험 배지: 80% 이상 HIGH RISK(빨강), 55%~79% MEDIUM RISK(주황)
             const badge = document.getElementById('riskBadge');
-            if (riskScore >= 70) {
+            const riskCard = document.querySelector('.risk-score-card');
+            const gaugeBg = document.querySelector('.risk-gauge-bg');
+            
+            if (riskScore >= 80) {
                 badge.textContent = 'HIGH RISK';
                 badge.className = 'badge badge-red';
-            } else if (riskScore >= 40) {
+                riskCard.classList.remove('medium-risk');
+                gaugeBg.style.stroke = '#fecaca';
+            } else {
                 badge.textContent = 'MEDIUM RISK';
                 badge.className = 'badge badge-orange';
-            } else {
-                badge.textContent = 'LOW RISK';
-                badge.className = 'badge badge-green';
+                riskCard.classList.add('medium-risk');
+                gaugeBg.style.stroke = '#fcd34d';
             }
 
             // 위험 요인
@@ -1638,25 +1695,34 @@
             const churnIcon = document.getElementById('churnIcon');
             const churnText = document.getElementById('churnText');
             
-            // 이탈 위험 고객 확인 (Predicted_Churn 또는 label 기준)
-            const isChurnRisk = customer.Predicted_Churn === 1 || customer.Predicted_Churn === '1' || customer.Predicted_Churn === 1.0 || customer.label === 1;
+            // 위험도 계산 (Churn_Probability 기준)
+            let riskScore = 0;
+            if (customer.Churn_Probability !== undefined && customer.Churn_Probability !== null) {
+                riskScore = Math.round(customer.Churn_Probability * 100);
+            } else if (customer.label === 1) {
+                riskScore = 85 + Math.floor(Math.random() * 10);
+            }
+            
+            // 55% 이상일 때만 이탈 위험으로 처리
+            const isChurnRisk = riskScore >= 55;
             
             if (isChurnRisk) {
-                churnIndicator.className = 'churn-indicator churn-high';
-                churnIcon.textContent = '⚠️';
-                churnText.textContent = '이탈 위험 고객';
+                // 80% 이상: 빨강, 55~79%: 주황
+                if (riskScore >= 80) {
+                    churnIndicator.className = 'churn-indicator churn-high';
+                    churnIcon.textContent = '🚨';
+                    churnText.textContent = '고위험 이탈 고객';
+                } else {
+                    churnIndicator.className = 'churn-indicator churn-medium';
+                    churnIcon.textContent = '⚠️';
+                    churnText.textContent = '이탈 위험 고객';
+                }
                 
                 // 이탈 위험 분석 탭 표시
                 showChurnTab();
                 updateChurnAnalysis(customer);
                 
-                // 위험도 계산 후 토스트 표시
-                let riskScore;
-                if (customer.Churn_Probability !== undefined && customer.Churn_Probability !== null) {
-                    riskScore = Math.round(customer.Churn_Probability * 100);
-                } else {
-                    riskScore = customer.label === 1 ? 85 + Math.floor(Math.random() * 10) : 30 + Math.floor(Math.random() * 20);
-                }
+                // 토스트 표시
                 showChurnToast(customer, riskScore);
             } else {
                 churnIndicator.className = 'churn-indicator churn-low';
