@@ -26,7 +26,7 @@ app.add_middleware(
 # ─────────────────────────────
 # 1) 서버 시작 시 CSV 한 번만 로드
 # ─────────────────────────────
-CSV_PATH = r"telco_with_name_phone.csv"
+CSV_PATH = r"telco_customer_data.csv"
 
 if not os.path.exists(CSV_PATH):
     raise FileNotFoundError(f"CSV 파일을 찾을 수 없습니다: {CSV_PATH}")
@@ -111,7 +111,7 @@ def search_customer(
     # 전화번호로 필터링 (하이픈 제거 후 비교)
     if phone:
         phone_clean = phone.replace("-", "")
-        result = result[result["phone_number"].astype(str).str.replace("-", "").str.contains(phone_clean, na=False)]
+        result = result[result["contact_number"].astype(str).str.replace("-", "").str.contains(phone_clean, na=False)]
     
     if result.empty:
         raise HTTPException(status_code=404, detail="해당 조건에 맞는 고객이 없습니다.")
@@ -131,7 +131,7 @@ def search_customer(
 @app.get("/summary")
 def summary():
     total_customers = int(len(df))
-    churn_rate = float(df["Churn"].mean())
+    churn_rate = float(df["Actual_Churn"].mean())
 
     return {
         "total_customers": total_customers,
