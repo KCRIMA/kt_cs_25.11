@@ -149,3 +149,157 @@ def summary():
         "total_customers": total_customers,
         "churn_rate": churn_rate
     }
+
+
+# ═══════════════════════════════════════════════════════════════
+# Admin 대시보드 API
+# ═══════════════════════════════════════════════════════════════
+
+# ─────────────────────────────
+# 7) Admin 대시보드용 - 전체 고객 데이터 반환
+# ─────────────────────────────
+@app.get("/admin/customers")
+def get_all_customers(
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    limit: int = Query(100, ge=1, le=5000, description="페이지당 항목 수"),
+    risk: str = Query(None, description="위험도 필터 (high/medium/low)"),
+    sort_by: str = Query("Churn_Probability", description="정렬 기준"),
+    order: str = Query("desc", description="정렬 순서 (asc/desc)")
+):
+    """관리자 대시보드용 전체 고객 데이터 (페이지네이션 지원)"""
+    result = df.copy()
+    
+    # 위험도 필터링
+    if risk == "high":
+        result = result[result["Churn_Probability"] >= 0.7]
+    elif risk == "medium":
+        result = result[(result["Churn_Probability"] >= 0.4) & (result["Churn_Probability"] < 0.7)]
+    elif risk == "low":
+        result = result[result["Churn_Probability"] < 0.4]
+    
+    # 정렬
+    if sort_by in result.columns:
+        ascending = order.lower() == "asc"
+        result = result.sort_values(by=sort_by, ascending=ascending)
+    
+    # 전체 개수
+    total_count = len(result)
+    
+    # 페이지네이션
+    start_idx = (page - 1) * limit
+    end_idx = start_idx + limit
+    paginated = result.iloc[start_idx:end_idx]
+    
+    records = paginated.to_dict(orient="records")
+    
+    return {
+        "total_count": total_count,
+        "page": page,
+        "limit": limit,
+        "total_pages": (total_count + limit - 1) // limit,
+        "customers": records
+    }
+
+
+# ─────────────────────────────
+# 8) Admin 대시보드용 - KPI 통계
+# ─────────────────────────────
+@app.get("/admin/stats")
+def get_admin_stats():
+    """KPI 카드용 통계"""
+    total_customers = len(df)
+    risk_customers = len(df[df["Churn_Probability"] >= 0.7])
+    avg_wait_time = df["wait_time_sec"].mean()
+    repeat_rate = (df["repeat_contacts_7d"] > 0).mean() * 100
+    avg_call_duration = df["call_duration_sec"].mean()
+    actual_churn_count = int(df["Actual_Churn"].sum())
+    
+    return {
+        "total_customers": int(total_customers),
+        "risk_customers": int(risk_customers),
+        "avg_wait_time": round(avg_wait_time, 1),
+        "repeat_rate": round(repeat_rate, 1),
+        "avg_call_duration": round(avg_call_duration, 1),
+        "actual_churn_count": actual_churn_count
+    }
+
+
+# ─────────────────────────────
+# 9) Admin 대시보드용 - 모든 차트 데이터
+# ─────────────────────────────
+@app.get("/admin/charts")
+def get_chart_data():
+    """모든 차트 데이터 한 번에 반환"""
+    import numpy as np
+    
+    # 1. 문의 카테고리 분포
+    category_counts = df["issue_category"].value_counts().to_dict()
+    
+    # 2. 이탈 확률 분포 (10% 구간별)
+    bins = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.01]
+    labels = ["0-10%", "10-20%", "20-30%", "30-40%", "40-50%", "50-60%", "60-70%", "70-80%", "80-90%", "90-100%"]
+    churn_dist = pd.cut(df["Churn_Probability"], bins=bins, labels=labels, include_lowest=True).value_counts().sort_index()
+    churn_histogram = {str(k): int(v) for k, v in churn_dist.items()}
+    
+    # 3. 계약유형별 이탈률
+    contract_stats = df.groupby("Contract").agg({
+        "Churn_Probability": "mean",
+        "Actual_Churn": "mean",
+        "customerID": "count"
+    }).rename(columns={"customerID": "count"})
+    contract_churn = {}
+    for contract_type in contract_stats.index:
+        contract_churn[contract_type] = {
+            "avg_churn_probability": round(float(contract_stats.loc[contract_type, "Churn_Probability"]) * 100, 1),
+            "actual_churn_rate": round(float(contract_stats.loc[contract_type, "Actual_Churn"]) * 100, 1),
+            "count": int(contract_stats.loc[contract_type, "count"])
+        }
+    
+    # 4. 대기 시간 분포 (초 단위)
+    wait_bins = [0, 30, 60, 90, 120, 150, 180, float("inf")]
+    wait_labels = ["0-30초", "30-60초", "60-90초", "90-120초", "120-150초", "150-180초", "180초+"]
+    wait_dist = pd.cut(df["wait_time_sec"], bins=wait_bins, labels=wait_labels, include_lowest=True).value_counts().sort_index()
+    wait_time = {str(k): int(v) for k, v in wait_dist.items()}
+    
+    # 5. 통화 시간 분포 (분 단위)
+    call_duration_min = df["call_duration_sec"] / 60
+    call_bins = [0, 2, 5, 10, 15, 20, float("inf")]
+    call_labels = ["0-2분", "2-5분", "5-10분", "10-15분", "15-20분", "20분+"]
+    call_dist = pd.cut(call_duration_min, bins=call_bins, labels=call_labels, include_lowest=True).value_counts().sort_index()
+    call_duration = {str(k): int(v) for k, v in call_dist.items()}
+    
+    # 6. 반복 문의 vs 이탈 확률 (산점도용 데이터)
+    scatter_data = df[["repeat_contacts_7d", "Churn_Probability", "issue_category"]].to_dict(orient="records")
+    
+    return {
+        "category": category_counts,
+        "churn_histogram": churn_histogram,
+        "contract_churn": contract_churn,
+        "wait_time": wait_time,
+        "call_duration": call_duration,
+        "scatter_data": scatter_data
+    }
+
+
+# ─────────────────────────────
+# 10) Admin 대시보드용 - 고위험 고객 리스트
+# ─────────────────────────────
+@app.get("/admin/high-risk-customers")
+def get_high_risk_customers(limit: int = Query(20, ge=1, le=100)):
+    """이탈 확률 높은 순으로 고위험 고객 리스트"""
+    high_risk = df[df["Churn_Probability"] >= 0.7].sort_values(
+        by="Churn_Probability", ascending=False
+    ).head(limit)
+    
+    # 필요한 컬럼만 선택
+    columns = [
+        "customerID", "customer_name", "Churn_Probability", 
+        "issue_category", "repeat_contacts_7d", "wait_time_sec",
+        "call_duration_sec", "Contract", "MonthlyCharges"
+    ]
+    result = high_risk[columns].to_dict(orient="records")
+    
+    return {
+        "count": len(result),
+        "customers": result
+    }

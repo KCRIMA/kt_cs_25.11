@@ -824,21 +824,50 @@
         day: 'numeric'
     });
 
+    // API Base URL (FastAPI 서버)
+    const API_BASE_URL = 'http://localhost:8000';
+    
+    // 서버에서 가져온 차트 데이터 저장
+    let chartDataFromAPI = null;
+
     // Fetch and process CSV data
     async function loadData() {
         try {
-            const response = await fetch('/api/customers');
-            customerData = await response.json();
+            // 1. 테이블용 고객 데이터 로드 (페이지네이션용)
+            const customersResponse = await fetch(`${API_BASE_URL}/admin/customers?limit=1500`);
+            if (!customersResponse.ok) throw new Error('Failed to fetch customers');
+            const customersData = await customersResponse.json();
+            customerData = customersData.customers;
             
             // Sort by churn probability descending
             customerData.sort((a, b) => b.Churn_Probability - a.Churn_Probability);
             filteredData = [...customerData];
             
-            updateKPIs();
-            renderCharts();
+            // 2. KPI 통계 로드 (전체 데이터 기반 - 서버에서 계산)
+            const statsResponse = await fetch(`${API_BASE_URL}/admin/stats`);
+            if (statsResponse.ok) {
+                const stats = await statsResponse.json();
+                document.getElementById('totalCustomers').textContent = stats.total_customers.toLocaleString();
+                document.getElementById('riskCustomers').textContent = stats.risk_customers;
+                document.getElementById('avgWaitTime').textContent = stats.avg_wait_time + '초';
+                document.getElementById('repeatRate').textContent = stats.repeat_rate + '%';
+            }
+            
+            // 3. 차트 데이터 로드 (전체 데이터 기반 - 서버에서 계산)
+            const chartsResponse = await fetch(`${API_BASE_URL}/admin/charts`);
+            if (chartsResponse.ok) {
+                chartDataFromAPI = await chartsResponse.json();
+                renderChartsFromAPI(chartDataFromAPI);
+            } else {
+                // API 실패 시 클라이언트 데이터로 렌더링
+                renderCharts();
+            }
+            
             renderTable();
+            
+            console.log('✅ API 데이터 로드 완료 - 테이블:', customerData.length, '건, 차트: 전체 데이터 기반');
         } catch (error) {
-            console.error('Error loading data:', error);
+            console.error('❌ API 로드 실패, 샘플 데이터 사용:', error);
             // Use sample data for demo
             loadSampleData();
         }
@@ -896,6 +925,7 @@
     }
 
     // Render all charts
+    // Render all charts (클라이언트 데이터 기반 - 폴백용)
     function renderCharts() {
         renderCategoryChart();
         renderChurnHistogram();
@@ -904,6 +934,245 @@
         renderWaitTimeChart();
         renderCallDurationChart();
     }
+
+    // Render charts from API data (서버에서 전체 데이터 기반으로 계산)
+    function renderChartsFromAPI(data) {
+        renderCategoryChartFromAPI(data.category);
+        renderChurnHistogramFromAPI(data.churn_histogram);
+        renderScatterChartFromAPI(data.scatter_data);
+        renderContractChartFromAPI(data.contract_churn);
+        renderWaitTimeChartFromAPI(data.wait_time);
+        renderCallDurationChartFromAPI(data.call_duration);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // API 데이터 기반 차트 렌더링 함수들 (전체 데이터 통계)
+    // ═══════════════════════════════════════════════════════════════
+
+    function renderCategoryChartFromAPI(categoryData) {
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(categoryData),
+                datasets: [{
+                    data: Object.values(categoryData),
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(16, 185, 129, 0.8)'
+                    ],
+                    borderColor: '#1e293b',
+                    borderWidth: 3,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { color: '#94a3b8', font: { size: 11 }, padding: 12, usePointStyle: true }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b', titleColor: '#f8fafc', bodyColor: '#94a3b8',
+                        borderColor: '#334155', borderWidth: 1, cornerRadius: 8
+                    }
+                }
+            }
+        });
+    }
+
+    function renderChurnHistogramFromAPI(histogramData) {
+        const ctx = document.getElementById('churnHistogram').getContext('2d');
+        
+        const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, 'rgba(239, 68, 68, 0.8)');
+        gradient.addColorStop(1, 'rgba(239, 68, 68, 0.2)');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(histogramData),
+                datasets: [{
+                    label: '고객 수',
+                    data: Object.values(histogramData),
+                    backgroundColor: gradient,
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: '#1e293b', titleColor: '#f8fafc', bodyColor: '#94a3b8', borderColor: '#334155', borderWidth: 1, cornerRadius: 8 }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 9 } } },
+                    y: { grid: { color: 'rgba(51, 65, 85, 0.5)' }, ticks: { color: '#64748b', font: { size: 10 } } }
+                }
+            }
+        });
+    }
+
+    function renderScatterChartFromAPI(scatterData) {
+        const ctx = document.getElementById('scatterChart').getContext('2d');
+        
+        const categoryColors = {
+            '요금': 'rgba(59, 130, 246, 0.7)',
+            '품질': 'rgba(139, 92, 246, 0.7)',
+            '해지': 'rgba(239, 68, 68, 0.7)',
+            '장애': 'rgba(245, 158, 11, 0.7)',
+            '해당 없음': 'rgba(107, 114, 128, 0.7)'
+        };
+
+        const datasets = Object.keys(categoryColors).map(category => ({
+            label: category,
+            data: scatterData.filter(d => d.issue_category === category).map(d => ({ x: d.repeat_contacts_7d, y: d.Churn_Probability })),
+            backgroundColor: categoryColors[category],
+            borderColor: categoryColors[category].replace('0.7', '1'),
+            borderWidth: 1,
+            pointRadius: 4,
+            pointHoverRadius: 6
+        }));
+
+        new Chart(ctx, {
+            type: 'scatter',
+            data: { datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { color: '#94a3b8', font: { size: 10 }, usePointStyle: true, padding: 8 } },
+                    tooltip: {
+                        backgroundColor: '#1e293b', titleColor: '#f8fafc', bodyColor: '#94a3b8', borderColor: '#334155', borderWidth: 1, cornerRadius: 8,
+                        callbacks: { label: (ctx) => `반복문의: ${ctx.parsed.x}회, 이탈확률: ${(ctx.parsed.y * 100).toFixed(1)}%` }
+                    }
+                },
+                scales: {
+                    x: { title: { display: true, text: '반복 문의 횟수', color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(51, 65, 85, 0.5)' }, ticks: { color: '#64748b' } },
+                    y: { title: { display: true, text: '이탈 확률', color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(51, 65, 85, 0.5)' }, ticks: { color: '#64748b', callback: v => (v * 100) + '%' }, min: 0, max: 1 }
+                }
+            }
+        });
+    }
+
+    function renderContractChartFromAPI(contractData) {
+        const ctx = document.getElementById('contractChart').getContext('2d');
+        
+        const labels = Object.keys(contractData).map(l => l === 'Month-to-month' ? '월별' : l === 'One year' ? '1년' : '2년');
+        const churnRates = Object.values(contractData).map(v => v.avg_churn_probability);
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '이탈률 (%)',
+                    data: churnRates,
+                    backgroundColor: ['rgba(239, 68, 68, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(16, 185, 129, 0.7)'],
+                    borderColor: ['rgba(239, 68, 68, 1)', 'rgba(245, 158, 11, 1)', 'rgba(16, 185, 129, 1)'],
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    barThickness: 50
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: '#1e293b', titleColor: '#f8fafc', bodyColor: '#94a3b8', borderColor: '#334155', borderWidth: 1, cornerRadius: 8, callbacks: { label: ctx => `이탈률: ${ctx.raw.toFixed(1)}%` } }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } },
+                    y: { grid: { color: 'rgba(51, 65, 85, 0.5)' }, ticks: { color: '#64748b', callback: v => v + '%' }, max: 100 }
+                }
+            }
+        });
+    }
+
+    function renderWaitTimeChartFromAPI(waitTimeData) {
+        const ctx = document.getElementById('waitTimeChart').getContext('2d');
+        
+        const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, 'rgba(20, 184, 166, 0.8)');
+        gradient.addColorStop(1, 'rgba(20, 184, 166, 0.2)');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(waitTimeData),
+                datasets: [{
+                    label: '고객 수',
+                    data: Object.values(waitTimeData),
+                    backgroundColor: gradient,
+                    borderColor: 'rgba(20, 184, 166, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: '#1e293b', titleColor: '#f8fafc', bodyColor: '#94a3b8', borderColor: '#334155', borderWidth: 1, cornerRadius: 8 }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 9 } } },
+                    y: { grid: { color: 'rgba(51, 65, 85, 0.5)' }, ticks: { color: '#64748b', font: { size: 10 } } }
+                }
+            }
+        });
+    }
+
+    function renderCallDurationChartFromAPI(callDurationData) {
+        const ctx = document.getElementById('callDurationChart').getContext('2d');
+        
+        const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.8)');
+        gradient.addColorStop(1, 'rgba(99, 102, 241, 0.2)');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(callDurationData),
+                datasets: [{
+                    label: '고객 수',
+                    data: Object.values(callDurationData),
+                    backgroundColor: gradient,
+                    borderColor: 'rgba(99, 102, 241, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: '#1e293b', titleColor: '#f8fafc', bodyColor: '#94a3b8', borderColor: '#334155', borderWidth: 1, cornerRadius: 8 }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } },
+                    y: { grid: { color: 'rgba(51, 65, 85, 0.5)' }, ticks: { color: '#64748b', font: { size: 10 } } }
+                }
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 클라이언트 데이터 기반 차트 렌더링 (폴백용)
+    // ═══════════════════════════════════════════════════════════════
 
     // Category Donut Chart
     function renderCategoryChart() {
@@ -1460,7 +1729,8 @@
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
-        loadSampleData();
+        // 먼저 API 연동 시도, 실패 시 샘플 데이터 사용
+        loadData();
     });
 </script>
 </body>
