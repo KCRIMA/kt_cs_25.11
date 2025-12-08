@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - 고객 분석 대시보드</title>
+    <title>컨택센터 관리자 대시보드</title>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -13,33 +13,32 @@
         }
 
         :root {
-            --bg-color: #f0f2f5;
-            --bg-primary: #f0f2f5;
-            --bg-white: #FFFFFF;
-            --card-bg: #ffffff;
-            --text-primary: #1e293b;
-            --text-dark: #1e293b;
-            --text-secondary: #64748b;
-            --text-gray: #64748b;
-            --text-muted: #94A3B8;
-            --border-color: #e2e8f0;
+            --bg-color: #0f172a;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --card-bg: #1e293b;
+            --card-bg-hover: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: #334155;
             --primary-blue: #3b82f6;
-            --primary-light: #eff6ff;
-            --accent-blue: #3b82f6;
-            --accent-indigo: #6366F1;
-            --accent-purple: #8B5CF6;
-            --accent-pink: #EC4899;
+            --primary-light: rgba(59, 130, 246, 0.1);
+            --accent-indigo: #6366f1;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
             --accent-red: #ef4444;
             --danger-red: #ef4444;
-            --accent-orange: #f59e0b;
+            --accent-orange: #f97316;
             --warning-orange: #f59e0b;
-            --accent-yellow: #EAB308;
+            --accent-yellow: #eab308;
             --accent-green: #10b981;
             --success-green: #10b981;
-            --accent-teal: #14B8A6;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --accent-teal: #14b8a6;
+            --accent-cyan: #06b6d4;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
         }
 
         * {
@@ -57,12 +56,12 @@
         }
 
         .dashboard {
-            max-width: 1440px;
+            max-width: 1600px;
             margin: 0 auto;
-            padding: 32px;
+            padding: 24px;
             display: flex;
             flex-direction: column;
-            gap: 32px;
+            gap: 24px;
         }
 
         /* Header */
@@ -74,7 +73,7 @@
             padding: 16px 24px;
             border-radius: 16px;
             border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-sm);
+            box-shadow: var(--shadow-md);
             animation: fadeIn 0.5s ease;
         }
 
@@ -83,11 +82,29 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
         .header h1 {
             font-size: 1.5rem;
             font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-badge {
+            padding: 6px 12px;
+            background: var(--primary-light);
+            border: 1px solid var(--primary-blue);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
             color: var(--primary-blue);
-            letter-spacing: -0.5px;
         }
 
         .header-actions {
@@ -101,7 +118,7 @@
             align-items: center;
             gap: 8px;
             padding: 8px 16px;
-            background: var(--bg-white);
+            background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 0.9rem;
@@ -114,9 +131,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--primary-blue);
+            background: linear-gradient(135deg, var(--primary-blue), var(--accent-indigo));
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             color: white;
             font-size: 16px;
             cursor: pointer;
@@ -124,859 +141,477 @@
         }
 
         .refresh-btn:hover {
-            background: #2563eb;
-            transform: scale(1.02);
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
         }
 
-        /* Search Box */
-        .search-container {
-            position: relative;
-            flex: 1;
-            max-width: 400px;
-        }
-
-        .search-box {
-            width: 100%;
-            padding: 10px 100px 10px 44px;
-            background: #f9fafb;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-family: inherit;
-            color: var(--text-primary);
-            transition: all 0.2s ease;
-        }
-
-        .search-box:focus {
-            outline: none;
-            border-color: var(--primary-blue);
-            background: white;
-        }
-
-        .search-box::placeholder {
-            color: var(--text-muted);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 16px;
-            color: var(--text-muted);
-            pointer-events: none;
-        }
-
-        .search-btn {
-            position: absolute;
-            right: 6px;
-            top: 50%;
-            transform: translateY(-50%);
-            padding: 6px 14px;
-            background: var(--primary-blue);
-            border: none;
-            border-radius: 6px;
-            color: white;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .search-btn:hover {
-            background: #2563eb;
-        }
-
-        /* Search Dropdown */
-        .search-dropdown {
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            right: 0;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            box-shadow: var(--shadow-lg);
-            z-index: 100;
-            display: none;
-            overflow: hidden;
-        }
-
-        .search-dropdown.active {
-            display: block;
-            animation: dropdownSlide 0.2s ease;
-        }
-
-        @keyframes dropdownSlide {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .dropdown-header {
-            padding: 12px 16px;
-            background: var(--bg-color);
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-gray);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .dropdown-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .dropdown-item:last-child {
-            border-bottom: none;
-        }
-
-        .dropdown-item:hover {
-            background: var(--primary-light);
-        }
-
-        .dropdown-item-icon {
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-color);
-            border-radius: 8px;
-            font-size: 16px;
-        }
-
-        .dropdown-item-info {
-            flex: 1;
-        }
-
-        .dropdown-item-id {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--text-dark);
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .dropdown-item-detail {
-            font-size: 0.8rem;
-            color: var(--text-gray);
-            margin-top: 2px;
-        }
-
-        .dropdown-item-badge {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .dropdown-item-badge.high-risk {
-            background: #fef2f2;
-            color: var(--danger-red);
-        }
-
-        .dropdown-item-badge.medium-risk {
-            background: #fffbeb;
-            color: var(--warning-orange);
-        }
-
-        .dropdown-item-badge.low-risk {
-            background: #f0fdf4;
-            color: var(--success-green);
-        }
-
-        /* Anomaly Popup */
-        .popup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .popup-overlay.active {
-            display: flex;
-        }
-
-        .popup {
-            background: var(--bg-white);
-            border-radius: 20px;
-            width: 90%;
-            max-width: 480px;
-            overflow: hidden;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-            animation: popupSlide 0.4s ease;
-        }
-
-        @keyframes popupSlide {
-            from { opacity: 0; transform: scale(0.9) translateY(20px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        .popup-header {
-            background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
-            padding: 24px;
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .popup-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 100%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        }
-
-        .popup-header-icon {
-            width: 56px;
-            height: 56px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            margin-bottom: 16px;
-            animation: pulse 2s infinite;
-        }
-
-        .popup-header h2 {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .popup-header p {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .popup-body {
-            padding: 24px;
-        }
-
-        .popup-customer-info {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 16px;
-            background: var(--bg-primary);
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-
-        .popup-customer-avatar {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            color: white;
-        }
-
-        .popup-customer-details h3 {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-primary);
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .popup-customer-details p {
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-        }
-
-        .popup-risk-score {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 16px;
-            background: rgba(239, 68, 68, 0.08);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-
-        .popup-risk-value {
-            font-size: 32px;
-            font-weight: 800;
-            color: var(--accent-red);
-        }
-
-        .popup-risk-info {
-            flex: 1;
-        }
-
-        .popup-risk-info h4 {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--accent-red);
-        }
-
-        .popup-risk-info p {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: 2px;
-        }
-
-        .popup-reasons {
-            margin-bottom: 24px;
-        }
-
-        .popup-reasons h4 {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .popup-reason-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 14px;
-            color: var(--text-primary);
-        }
-
-        .popup-reason-item:last-child {
-            border-bottom: none;
-        }
-
-        .popup-reason-icon {
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(249, 115, 22, 0.1);
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        .popup-actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        .popup-btn {
-            flex: 1;
-            padding: 14px 20px;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: inherit;
-        }
-
-        .popup-btn-primary {
-            background: var(--primary-blue);
-            color: white;
-        }
-
-        .popup-btn-primary:hover {
-            background: #2563eb;
-            transform: translateY(-1px);
-        }
-
-        .popup-btn-secondary {
-            background: var(--bg-color);
-            color: var(--text-gray);
-            border: 1px solid var(--border-color);
-        }
-
-        .popup-btn-secondary:hover {
-            background: var(--border-color);
-        }
-
-        .popup-close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            width: 32px;
-            height: 32px;
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .popup-close:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        /* Toast Notification */
-        .toast-container {
-            position: fixed;
-            top: 24px;
-            right: 24px;
-            z-index: 999;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .toast {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 16px 20px;
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--border-color);
-            border-left: 4px solid var(--danger-red);
-            animation: toastSlide 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            min-width: 320px;
-        }
-
-        .toast:hover {
-            transform: translateX(-4px);
-        }
-
-        @keyframes toastSlide {
-            from { opacity: 0; transform: translateX(100px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .toast-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--danger-red) 0%, #dc2626 100%);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            flex-shrink: 0;
-        }
-
-        .toast-content h4 {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--text-dark);
-        }
-
-        .toast-content p {
-            font-size: 0.9rem;
-            color: var(--primary-blue);
-            margin-top: 4px;
-            font-weight: 500;
-        }
-
-        .toast-close {
-            background: none;
-            border: none;
-            color: var(--text-gray);
-            font-size: 18px;
-            cursor: pointer;
-            padding: 4px;
-            margin-left: auto;
-            transition: all 0.2s;
-            border-radius: 4px;
-        }
-
-        .toast-close:hover {
-            background: var(--bg-color);
-            color: var(--text-dark);
-        }
-
-        /* Stats Row */
-        .stats-row {
+        /* KPI Cards */
+        .kpi-row {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
+            gap: 10px;
         }
 
-        .stat-card {
+        .kpi-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 20px 24px;
+            border-radius: 10px;
+            padding: 10px 14px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            transition: all 0.2s ease;
+            gap: 4px;
+            transition: all 0.3s ease;
             animation: slideUp 0.5s ease forwards;
             opacity: 0;
             position: relative;
             overflow: hidden;
-            box-shadow: var(--shadow-md);
         }
 
-        .stat-card::before {
+        .kpi-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
-            width: 4px;
-            height: 100%;
-            border-radius: 4px 0 0 4px;
+            right: 0;
+            height: 2px;
         }
 
-        .stat-card:nth-child(1)::before { background: var(--primary-blue); }
-        .stat-card:nth-child(2)::before { background: var(--danger-red); }
-        .stat-card:nth-child(3)::before { background: var(--success-green); }
-        .stat-card:nth-child(4)::before { background: var(--warning-orange); }
+        .kpi-card:nth-child(1)::before { background: linear-gradient(90deg, var(--primary-blue), var(--accent-cyan)); }
+        .kpi-card:nth-child(2)::before { background: linear-gradient(90deg, var(--danger-red), var(--accent-orange)); }
+        .kpi-card:nth-child(3)::before { background: linear-gradient(90deg, var(--accent-teal), var(--accent-green)); }
+        .kpi-card:nth-child(4)::before { background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink)); }
 
-        .stat-card:nth-child(1) { animation-delay: 0.1s; }
-        .stat-card:nth-child(2) { animation-delay: 0.15s; }
-        .stat-card:nth-child(3) { animation-delay: 0.2s; }
-        .stat-card:nth-child(4) { animation-delay: 0.25s; }
+        .kpi-card:nth-child(1) { animation-delay: 0.1s; }
+        .kpi-card:nth-child(2) { animation-delay: 0.15s; }
+        .kpi-card:nth-child(3) { animation-delay: 0.2s; }
+        .kpi-card:nth-child(4) { animation-delay: 0.25s; }
 
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .stat-card:hover {
+        .kpi-card:hover {
             transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-blue);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
         }
 
-        .stat-label {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-gray);
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--text-dark);
-        }
-
-        .stat-change {
-            font-size: 0.8rem;
+        .kpi-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .kpi-card:nth-child(1) .kpi-icon { background: rgba(59, 130, 246, 0.15); }
+        .kpi-card:nth-child(2) .kpi-icon { background: rgba(239, 68, 68, 0.15); }
+        .kpi-card:nth-child(3) .kpi-icon { background: rgba(20, 184, 166, 0.15); }
+        .kpi-card:nth-child(4) .kpi-icon { background: rgba(139, 92, 246, 0.15); }
+
+        .kpi-label {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .kpi-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .kpi-card:nth-child(1) .kpi-value { color: var(--primary-blue); }
+        .kpi-card:nth-child(2) .kpi-value { color: var(--danger-red); }
+        .kpi-card:nth-child(3) .kpi-value { color: var(--accent-teal); }
+        .kpi-card:nth-child(4) .kpi-value { color: var(--accent-purple); }
+
+        .kpi-change {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 0.65rem;
             font-weight: 500;
         }
 
-        .stat-change.positive { color: var(--success-green); }
-        .stat-change.negative { color: var(--danger-red); }
+        .kpi-change.positive { color: var(--success-green); }
+        .kpi-change.negative { color: var(--danger-red); }
 
-        /* Main Grid */
-        .main-grid {
+        /* Chart Grid */
+        .chart-grid {
             display: grid;
-            grid-template-columns: 450px 1fr;
-            gap: 24px;
-        }
-
-        .left-column {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .right-column {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
         }
 
         /* Cards */
         .card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 24px;
+            border-radius: 12px;
+            padding: 16px;
             box-shadow: var(--shadow-md);
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             animation: slideUp 0.6s ease forwards;
             opacity: 0;
         }
 
         .card:hover {
-            box-shadow: var(--shadow-lg);
+            border-color: rgba(99, 102, 241, 0.3);
         }
 
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 12px;
         }
 
         .card-title {
-            font-size: 1.1rem;
+            font-size: 0.85rem;
             font-weight: 700;
-            color: var(--text-dark);
+            color: var(--text-primary);
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .card-title::before {
-            content: '';
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--primary-blue);
-        }
-
-        .card-menu {
-            width: 32px;
-            height: 32px;
+        .card-title-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--bg-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-gray);
-            cursor: pointer;
-            transition: all 0.2s ease;
+            font-size: 13px;
+            background: var(--primary-light);
         }
 
-        .card-menu:hover {
+        .card-menu {
+            display: flex;
+            gap: 8px;
+        }
+
+        .card-menu-btn {
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 12px;
+        }
+
+        .card-menu-btn:hover {
             background: var(--primary-light);
             color: var(--primary-blue);
             border-color: var(--primary-blue);
         }
 
-        /* Chart Containers */
+        /* Chart Container */
         .chart-container {
             position: relative;
-            height: 180px;
-            padding: 10px;
-            background: var(--bg-color);
-            border-radius: 12px;
-        }
-
-        .chart-container.large {
             height: 200px;
+            padding: 8px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
         }
 
-        /* Bottom Row */
-        .bottom-row {
-            display: grid;
-            grid-template-columns: 1fr 280px;
-            gap: 24px;
+        /* Animation delays */
+        .chart-grid .card:nth-child(1) { animation-delay: 0.3s; }
+        .chart-grid .card:nth-child(2) { animation-delay: 0.35s; }
+        .chart-grid .card:nth-child(3) { animation-delay: 0.4s; }
+        .chart-grid .card:nth-child(4) { animation-delay: 0.45s; }
+        .chart-grid .card:nth-child(5) { animation-delay: 0.5s; }
+        .chart-grid .card:nth-child(6) { animation-delay: 0.55s; }
+
+        /* Customer Table */
+        .table-card {
+            animation-delay: 0.5s;
         }
 
-        /* Risk Gauge */
-        .risk-card {
+        .table-header {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #fef2f2 0%, var(--card-bg) 100%);
-            border: 2px solid #fecaca;
+            margin-bottom: 16px;
         }
 
-        .risk-gauge {
-            position: relative;
-            width: 160px;
-            height: 160px;
+        .table-filters {
             display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .risk-gauge svg {
-            position: absolute;
-            transform: rotate(-90deg);
-        }
-
-        .risk-gauge-bg {
-            fill: none;
-            stroke: #fecaca;
-            stroke-width: 12;
-        }
-
-        .risk-gauge-fill {
-            fill: none;
-            stroke: var(--danger-red);
-            stroke-width: 12;
-            stroke-linecap: round;
-            stroke-dasharray: 440;
-            stroke-dashoffset: 145;
-            animation: gaugeAnim 1.5s ease-out forwards;
-        }
-
-        @keyframes gaugeAnim {
-            from { stroke-dashoffset: 440; }
-            to { stroke-dashoffset: 145; }
-        }
-
-        .risk-value {
-            font-size: 2.2rem;
-            font-weight: 800;
-            color: var(--danger-red);
-        }
-
-        .risk-label {
-            margin-top: 12px;
-            font-size: 0.9rem;
-            color: var(--text-gray);
-            text-align: center;
-        }
-
-        .risk-status {
-            margin-top: 8px;
-            padding: 6px 14px;
-            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-            border: 1px solid #fecaca;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--danger-red);
-        }
-
-        /* Topic List */
-        .topic-list {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .topic-item {
-            display: flex;
-            align-items: center;
             gap: 12px;
         }
 
-        .topic-bar-container {
-            flex: 1;
-            height: 32px;
-            background: var(--bg-color);
+        .filter-btn {
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            overflow: hidden;
-            position: relative;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
         }
 
-        .topic-bar {
-            height: 100%;
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--primary-light);
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
+        }
+
+        .search-input {
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            display: flex;
-            align-items: center;
-            padding-left: 12px;
-            font-size: 0.8rem;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            width: 240px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            background: var(--bg-primary);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .customer-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .customer-table th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 0.75rem;
             font-weight: 600;
-            color: white;
-            transition: width 1s ease;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.5);
         }
 
-        .topic-label {
-            width: 80px;
+        .customer-table th:first-child {
+            border-radius: 8px 0 0 0;
+        }
+
+        .customer-table th:last-child {
+            border-radius: 0 8px 0 0;
+        }
+
+        .customer-table td {
+            padding: 14px 16px;
             font-size: 0.9rem;
-            color: var(--text-gray);
-            flex-shrink: 0;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .customer-table tbody tr {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .customer-table tbody tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .customer-table tbody tr:hover td {
+            color: var(--primary-blue);
+        }
+
+        .customer-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
+        .customer-name {
             font-weight: 500;
         }
 
-        .topic-value {
-            width: 40px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: var(--text-dark);
-            text-align: right;
-        }
-
-        /* Issue Trend */
-        .trend-chart {
-            display: flex;
-            align-items: flex-end;
-            gap: 10px;
-            height: 160px;
-            padding-top: 20px;
-        }
-
-        .trend-bar-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
+        .risk-badge {
+            display: inline-flex;
             align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .risk-badge.high {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .risk-badge.medium {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning-orange);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .risk-badge.low {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .issue-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .issue-badge.billing { background: rgba(59, 130, 246, 0.15); color: var(--primary-blue); }
+        .issue-badge.quality { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+        .issue-badge.churn { background: rgba(239, 68, 68, 0.15); color: var(--danger-red); }
+        .issue-badge.fault { background: rgba(245, 158, 11, 0.15); color: var(--warning-orange); }
+
+        .contact-count {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .contact-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-purple);
+        }
+
+        /* Pagination */
+        .table-pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .pagination-info {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .pagination-buttons {
+            display: flex;
             gap: 8px;
         }
 
-        .trend-bar {
-            width: 100%;
-            border-radius: 8px 8px 0 0;
-            transition: height 0.8s ease;
-            position: relative;
+        .page-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
         }
 
-        .trend-bar::after {
-            content: attr(data-value);
-            position: absolute;
-            top: -24px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--text-gray);
+        .page-btn:hover, .page-btn.active {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+            color: white;
         }
-
-        .trend-label {
-            font-size: 0.8rem;
-            color: var(--text-gray);
-            font-weight: 500;
-        }
-
-        /* Animation delays for cards */
-        .left-column .card:nth-child(1) { animation-delay: 0.3s; }
-        .left-column .card:nth-child(2) { animation-delay: 0.4s; }
-        .right-column .card:nth-child(1) { animation-delay: 0.35s; }
-        .bottom-row .card:nth-child(1) { animation-delay: 0.45s; }
-        .bottom-row .card:nth-child(2) { animation-delay: 0.5s; }
 
         /* Responsive */
-        @media (max-width: 1200px) {
-            .main-grid {
-                grid-template-columns: 1fr;
+        @media (max-width: 1400px) {
+            .chart-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
+        }
 
-            .bottom-row {
+        @media (max-width: 900px) {
+            .chart-grid {
                 grid-template-columns: 1fr;
             }
         }
 
         @media (max-width: 768px) {
-            .stats-row {
+            .kpi-row {
                 grid-template-columns: repeat(2, 1fr);
             }
 
             .dashboard {
                 padding: 16px;
-                gap: 24px;
+                gap: 16px;
             }
+
+            .header {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .table-filters {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Tooltip */
+        .chart-tooltip {
+            background: var(--card-bg) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 8px !important;
+            color: var(--text-primary) !important;
+            box-shadow: var(--shadow-lg) !important;
         }
     </style>
 </head>
@@ -984,476 +619,849 @@
 <div class="dashboard">
     <!-- Header -->
     <header class="header">
-        <h1>Dashboard</h1>
-
-        <!-- Search Box -->
-        <div class="search-container">
-            <span class="search-icon">🔍</span>
-            <input type="text" class="search-box" id="customerSearch" placeholder="고객 ID를 입력하세요 (예: 4088-YLDSU)" autocomplete="off">
-            <button class="search-btn" onclick="searchCustomer()">검색</button>
-
-            <!-- Search Dropdown -->
-            <div class="search-dropdown" id="searchDropdown">
-                <div class="dropdown-header">최근 검색 및 이상 고객</div>
-                <div class="dropdown-item" onclick="goToCustomer('4088-YLDSU')">
-                    <div class="dropdown-item-icon">👤</div>
-                    <div class="dropdown-item-info">
-                        <div class="dropdown-item-id">4088-YLDSU</div>
-                        <div class="dropdown-item-detail">One-year · Electronic Check</div>
-                    </div>
-                    <span class="dropdown-item-badge high-risk">92% 위험</span>
-                </div>
-                <div class="dropdown-item" onclick="goToCustomer('7295-KBMNA')">
-                    <div class="dropdown-item-icon">👤</div>
-                    <div class="dropdown-item-info">
-                        <div class="dropdown-item-id">7295-KBMNA</div>
-                        <div class="dropdown-item-detail">Two-year · Credit Card</div>
-                    </div>
-                    <span class="dropdown-item-badge medium-risk">67% 위험</span>
-                </div>
-                <div class="dropdown-item" onclick="goToCustomer('3829-PLWXA')">
-                    <div class="dropdown-item-icon">👤</div>
-                    <div class="dropdown-item-info">
-                        <div class="dropdown-item-id">3829-PLWXA</div>
-                        <div class="dropdown-item-detail">Month-to-month · Bank Transfer</div>
-                    </div>
-                    <span class="dropdown-item-badge low-risk">23% 위험</span>
-                </div>
-            </div>
+        <div class="header-left">
+            <h1>📊 컨택센터 관리자 대시보드</h1>
+            <span class="header-badge">실시간 모니터링</span>
         </div>
-
         <div class="header-actions">
             <div class="date-badge">
-                📅 2024년 11월 27일
+                📅 <span id="currentDate"></span>
             </div>
-            <button class="refresh-btn" onclick="location.reload()">
+            <button class="refresh-btn" onclick="refreshData()">
                 🔄
             </button>
         </div>
     </header>
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
-
-    <!-- Anomaly Popup -->
-    <div class="popup-overlay" id="anomalyPopup">
-        <div class="popup">
-            <div class="popup-header">
-                <button class="popup-close" onclick="closePopup()">✕</button>
-                <div class="popup-header-icon">⚠️</div>
-                <h2>이상 고객 감지</h2>
-                <p>고위험 이탈 가능성이 있는 고객이 발견되었습니다</p>
+    <!-- KPI Cards -->
+    <div class="kpi-row">
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon">👥</div>
+                <span class="kpi-change positive" id="totalCustomersChange">↑ 2.3%</span>
             </div>
-            <div class="popup-body">
-                <div class="popup-customer-info">
-                    <div class="popup-customer-avatar">👤</div>
-                    <div class="popup-customer-details">
-                        <h3 id="popupCustomerId">4088-YLDSU</h3>
-                        <p>One-year 계약 · Electronic Check 결제</p>
-                    </div>
-                </div>
+            <span class="kpi-label">총 고객 수</span>
+            <span class="kpi-value" id="totalCustomers">-</span>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon">🚨</div>
+                <span class="kpi-change negative" id="riskCustomersChange">↑ 5명</span>
+            </div>
+            <span class="kpi-label">이탈 위험 고객</span>
+            <span class="kpi-value" id="riskCustomers">-</span>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon">⏱️</div>
+                <span class="kpi-change positive" id="avgWaitChange">↓ 12%</span>
+            </div>
+            <span class="kpi-label">평균 대기 시간</span>
+            <span class="kpi-value" id="avgWaitTime">-</span>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon">🔄</div>
+                <span class="kpi-change negative" id="repeatRateChange">↑ 3.2%</span>
+            </div>
+            <span class="kpi-label">반복 문의율</span>
+            <span class="kpi-value" id="repeatRate">-</span>
+        </div>
+    </div>
 
-                <div class="popup-risk-score">
-                    <span class="popup-risk-value" id="popupRiskScore">92%</span>
-                    <div class="popup-risk-info">
-                        <h4>이탈 위험도</h4>
-                        <p>즉각적인 대응이 필요합니다</p>
-                    </div>
+    <!-- Chart Grid -->
+    <div class="chart-grid">
+        <!-- Issue Category Donut Chart -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <span class="card-title-icon">📊</span>
+                    문의 카테고리 분포
+                </h3>
+                <div class="card-menu">
+                    <button class="card-menu-btn">⋮</button>
                 </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
 
-                <div class="popup-reasons">
-                    <h4>주요 위험 요인</h4>
-                    <div class="popup-reason-item">
-                        <span class="popup-reason-icon">💰</span>
-                        최근 요금 급등 (전월 대비 +42%)
-                    </div>
-                    <div class="popup-reason-item">
-                        <span class="popup-reason-icon">📞</span>
-                        반복 문의 3회 발생
-                    </div>
-                    <div class="popup-reason-item">
-                        <span class="popup-reason-icon">⏱️</span>
-                        평균 대기 시간 증가
-                    </div>
+        <!-- Churn Probability Histogram -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <span class="card-title-icon">📈</span>
+                    이탈 확률 분포
+                </h3>
+                <div class="card-menu">
+                    <button class="card-menu-btn">⋮</button>
                 </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="churnHistogram"></canvas>
+            </div>
+        </div>
 
-                <div class="popup-actions">
-                    <button class="popup-btn popup-btn-secondary" onclick="closePopup()">나중에</button>
-                    <button class="popup-btn popup-btn-primary" onclick="goToCustomer('4088-YLDSU')">상세 분석 보기</button>
+        <!-- Repeat Contacts vs Churn Probability Scatter -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <span class="card-title-icon">🔴</span>
+                    반복문의 vs 이탈확률
+                </h3>
+                <div class="card-menu">
+                    <button class="card-menu-btn">⋮</button>
                 </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="scatterChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Contract Type Churn Rate Bar Chart -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <span class="card-title-icon">📊</span>
+                    계약유형별 이탈률
+                </h3>
+                <div class="card-menu">
+                    <button class="card-menu-btn">⋮</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="contractChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Wait Time Distribution Histogram -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <span class="card-title-icon">⏱️</span>
+                    대기 시간 분포
+                </h3>
+                <div class="card-menu">
+                    <button class="card-menu-btn">⋮</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="waitTimeChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Call Duration Distribution Histogram -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <span class="card-title-icon">📞</span>
+                    통화 시간 분포
+                </h3>
+                <div class="card-menu">
+                    <button class="card-menu-btn">⋮</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="callDurationChart"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Stats Row -->
-    <div class="stats-row">
-        <div class="stat-card">
-            <span class="stat-label">일일 건수</span>
-            <span class="stat-value">11</span>
-            <span class="stat-change positive">↑ 2.3% vs 어제</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-label">해지 건수</span>
-            <span class="stat-value">2</span>
-            <span class="stat-change negative">↑ 1건 증가</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-label">문의 건수</span>
-            <span class="stat-value">245</span>
-            <span class="stat-change positive">↓ 5.1% 감소</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-label">재발 고객</span>
-            <span class="stat-value">134</span>
-            <span class="stat-change negative">↑ 12명 증가</span>
-        </div>
-    </div>
-
-    <!-- Main Grid -->
-    <div class="main-grid">
-        <!-- Left Column -->
-        <div class="left-column">
-            <!-- Issue Trend Card -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">이상징후 발생 현황</h3>
-                    <button class="card-menu">⋮</button>
-                </div>
-                <div class="trend-chart">
-                    <div class="trend-bar-wrapper">
-                        <div class="trend-bar" style="height: 60%; background: linear-gradient(180deg, #6366F1, #8B5CF6);" data-value="12"></div>
-                        <span class="trend-label">월</span>
-                    </div>
-                    <div class="trend-bar-wrapper">
-                        <div class="trend-bar" style="height: 80%; background: linear-gradient(180deg, #6366F1, #8B5CF6);" data-value="18"></div>
-                        <span class="trend-label">화</span>
-                    </div>
-                    <div class="trend-bar-wrapper">
-                        <div class="trend-bar" style="height: 45%; background: linear-gradient(180deg, #6366F1, #8B5CF6);" data-value="9"></div>
-                        <span class="trend-label">수</span>
-                    </div>
-                    <div class="trend-bar-wrapper">
-                        <div class="trend-bar" style="height: 95%; background: linear-gradient(180deg, #EF4444, #F97316);" data-value="24"></div>
-                        <span class="trend-label">목</span>
-                    </div>
-                    <div class="trend-bar-wrapper">
-                        <div class="trend-bar" style="height: 70%; background: linear-gradient(180deg, #6366F1, #8B5CF6);" data-value="15"></div>
-                        <span class="trend-label">금</span>
-                    </div>
-                    <div class="trend-bar-wrapper">
-                        <div class="trend-bar" style="height: 35%; background: linear-gradient(180deg, #22C55E, #14B8A6);" data-value="7"></div>
-                        <span class="trend-label">토</span>
-                    </div>
-                    <div class="trend-bar-wrapper">
-                        <div class="trend-bar" style="height: 25%; background: linear-gradient(180deg, #22C55E, #14B8A6);" data-value="5"></div>
-                        <span class="trend-label">일</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Topic Card -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">문의 주제별 건수</h3>
-                    <button class="card-menu">⋮</button>
-                </div>
-                <div class="topic-list">
-                    <div class="topic-item">
-                        <span class="topic-label">요금 문의</span>
-                        <div class="topic-bar-container">
-                            <div class="topic-bar" style="width: 85%; background: linear-gradient(90deg, #3B82F6, #6366F1);">85</div>
-                        </div>
-                        <span class="topic-value">85</span>
-                    </div>
-                    <div class="topic-item">
-                        <span class="topic-label">품질 문의</span>
-                        <div class="topic-bar-container">
-                            <div class="topic-bar" style="width: 62%; background: linear-gradient(90deg, #8B5CF6, #EC4899);">62</div>
-                        </div>
-                        <span class="topic-value">62</span>
-                    </div>
-                    <div class="topic-item">
-                        <span class="topic-label">해지 문의</span>
-                        <div class="topic-bar-container">
-                            <div class="topic-bar" style="width: 48%; background: linear-gradient(90deg, #EF4444, #F97316);">48</div>
-                        </div>
-                        <span class="topic-value">48</span>
-                    </div>
-                    <div class="topic-item">
-                        <span class="topic-label">기타</span>
-                        <div class="topic-bar-container">
-                            <div class="topic-bar" style="width: 50%; background: linear-gradient(90deg, #14B8A6, #22C55E);">50</div>
-                        </div>
-                        <span class="topic-value">50</span>
-                    </div>
-                </div>
+    <!-- Customer Risk Table -->
+    <div class="card table-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <span class="card-title-icon">🚨</span>
+                이탈 위험 고객 리스트
+            </h3>
+            <div class="table-filters">
+                <button class="filter-btn active" onclick="filterRisk('all')">전체</button>
+                <button class="filter-btn" onclick="filterRisk('high')">고위험</button>
+                <button class="filter-btn" onclick="filterRisk('medium')">중위험</button>
+                <button class="filter-btn" onclick="filterRisk('low')">저위험</button>
+                <input type="text" class="search-input" placeholder="🔍 고객 검색..." id="customerSearchInput" oninput="searchCustomers()">
             </div>
         </div>
-
-        <!-- Right Column -->
-        <div class="right-column">
-            <!-- Time Series Card -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">문의량 시계열 그래프</h3>
-                    <button class="card-menu">⋮</button>
-                </div>
-                <div class="chart-container large">
-                    <canvas id="timeSeriesChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Bottom Row -->
-            <div class="bottom-row">
-                <!-- Sentiment Card -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">상담 내용 기반 감정 점수 분포</h3>
-                        <button class="card-menu">⋮</button>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="sentimentChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Risk Card -->
-                <div class="card risk-card">
-                    <div class="card-header" style="width: 100%;">
-                        <h3 class="card-title">전체 리스크 지수</h3>
-                    </div>
-                    <div class="risk-gauge">
-                        <svg width="180" height="180" viewBox="0 0 180 180">
-                            <defs>
-                                <linearGradient id="riskGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" style="stop-color:#F97316"/>
-                                    <stop offset="100%" style="stop-color:#EF4444"/>
-                                </linearGradient>
-                            </defs>
-                            <circle class="risk-gauge-bg" cx="90" cy="90" r="70"/>
-                            <circle class="risk-gauge-fill" cx="90" cy="90" r="70"/>
-                        </svg>
-                        <span class="risk-value">67%</span>
-                    </div>
-                    <span class="risk-label">전체 고객 대비 위험 수준</span>
-                    <span class="risk-status">⚠️ 주의 필요</span>
-                </div>
+        <table class="customer-table">
+            <thead>
+                <tr>
+                    <th>고객 ID</th>
+                    <th>고객명</th>
+                    <th>이탈 확률</th>
+                    <th>문의 유형</th>
+                    <th>반복 문의</th>
+                    <th>대기 시간</th>
+                    <th>계약 유형</th>
+                    <th>월 요금</th>
+                </tr>
+            </thead>
+            <tbody id="customerTableBody">
+                <!-- Data will be populated by JavaScript -->
+            </tbody>
+        </table>
+        <div class="table-pagination">
+            <span class="pagination-info" id="paginationInfo">총 0건 중 0 - 0 표시</span>
+            <div class="pagination-buttons" id="paginationButtons">
+                <!-- Pagination buttons will be generated by JavaScript -->
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Time Series Chart
-    const timeSeriesCtx = document.getElementById('timeSeriesChart').getContext('2d');
+    // Global data storage
+    let customerData = [];
+    let filteredData = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
+    let currentFilter = 'all';
 
-    const gradient = timeSeriesCtx.createLinearGradient(0, 0, 0, 200);
-    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
-    gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
-
-    new Chart(timeSeriesCtx, {
-        type: 'line',
-        data: {
-            labels: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'],
-            datasets: [{
-                label: '문의량',
-                data: [12, 19, 28, 35, 22, 18, 32, 45, 38, 24],
-                borderColor: '#6366F1',
-                backgroundColor: gradient,
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#6366F1',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#94A3B8', font: { size: 11 } }
-                },
-                y: {
-                    grid: { color: '#F1F5F9' },
-                    ticks: { color: '#94A3B8', font: { size: 11 } }
-                }
-            },
-            interaction: {
-                intersect: false,
-                mode: 'index'
-            }
-        }
+    // Set current date
+    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
     });
 
-    // Sentiment Chart
-    const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
-
-    new Chart(sentimentCtx, {
-        type: 'bar',
-        data: {
-            labels: ['매우 부정', '부정', '중립', '긍정', '매우 긍정'],
-            datasets: [{
-                label: '건수',
-                data: [15, 42, 88, 65, 35],
-                backgroundColor: [
-                    'rgba(239, 68, 68, 0.8)',
-                    'rgba(249, 115, 22, 0.8)',
-                    'rgba(148, 163, 184, 0.8)',
-                    'rgba(34, 197, 94, 0.8)',
-                    'rgba(16, 185, 129, 0.8)'
-                ],
-                borderRadius: 6,
-                borderSkipped: false
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#94A3B8', font: { size: 10 } }
-                },
-                y: {
-                    grid: { color: '#F1F5F9' },
-                    ticks: { color: '#94A3B8', font: { size: 11 } }
-                }
-            }
+    // Fetch and process CSV data
+    async function loadData() {
+        try {
+            const response = await fetch('/api/customers');
+            customerData = await response.json();
+            
+            // Sort by churn probability descending
+            customerData.sort((a, b) => b.Churn_Probability - a.Churn_Probability);
+            filteredData = [...customerData];
+            
+            updateKPIs();
+            renderCharts();
+            renderTable();
+        } catch (error) {
+            console.error('Error loading data:', error);
+            // Use sample data for demo
+            loadSampleData();
         }
-    });
+    }
 
-    // Animate trend bars on load
-    document.addEventListener('DOMContentLoaded', () => {
-        const bars = document.querySelectorAll('.trend-bar');
-        bars.forEach((bar, index) => {
-            const height = bar.style.height;
-            bar.style.height = '0%';
-            setTimeout(() => {
-                bar.style.height = height;
-            }, 100 + index * 100);
+    // Sample data for demonstration
+    function loadSampleData() {
+        customerData = [
+            { customerID: '7481-ATQQS', customer_name: '서시우', Churn_Probability: 0.983, issue_category: '요금', repeat_contacts_7d: 3, wait_time_sec: 231, call_duration_sec: 726, Contract: 'Month-to-month', MonthlyCharges: 90.85 },
+            { customerID: '0709-TVGUR', customer_name: '황지호', Churn_Probability: 0.970, issue_category: '해지', repeat_contacts_7d: 3, wait_time_sec: 110, call_duration_sec: 380, Contract: 'Month-to-month', MonthlyCharges: 74.55 },
+            { customerID: '9170-CCKOU', customer_name: '서서연', Churn_Probability: 0.974, issue_category: '요금', repeat_contacts_7d: 2, wait_time_sec: 120, call_duration_sec: 1115, Contract: 'Month-to-month', MonthlyCharges: 90.2 },
+            { customerID: '5348-CAGXB', customer_name: '최하윤', Churn_Probability: 0.930, issue_category: '요금', repeat_contacts_7d: 4, wait_time_sec: 51, call_duration_sec: 274, Contract: 'Month-to-month', MonthlyCharges: 89.55 },
+            { customerID: '9274-CNFMO', customer_name: '박서연', Churn_Probability: 0.887, issue_category: '요금', repeat_contacts_7d: 3, wait_time_sec: 34, call_duration_sec: 353, Contract: 'Month-to-month', MonthlyCharges: 74.95 },
+            { customerID: '1866-RZZQS', customer_name: '임주원', Churn_Probability: 0.896, issue_category: '해지', repeat_contacts_7d: 1, wait_time_sec: 69, call_duration_sec: 423, Contract: 'Month-to-month', MonthlyCharges: 98.4 },
+            { customerID: '2180-DXNEG', customer_name: '안지호', Churn_Probability: 0.877, issue_category: '품질', repeat_contacts_7d: 3, wait_time_sec: 51, call_duration_sec: 370, Contract: 'Month-to-month', MonthlyCharges: 96.0 },
+            { customerID: '5868-YTYKS', customer_name: '최서준', Churn_Probability: 0.891, issue_category: '해지', repeat_contacts_7d: 2, wait_time_sec: 154, call_duration_sec: 1299, Contract: 'Month-to-month', MonthlyCharges: 20.25 },
+            { customerID: '2254-DLXRI', customer_name: '안지우', Churn_Probability: 0.820, issue_category: '장애', repeat_contacts_7d: 3, wait_time_sec: 60, call_duration_sec: 309, Contract: 'Month-to-month', MonthlyCharges: 79.15 },
+            { customerID: '2858-EIMXH', customer_name: '정지민', Churn_Probability: 0.790, issue_category: '품질', repeat_contacts_7d: 0, wait_time_sec: 20, call_duration_sec: 338, Contract: 'One year', MonthlyCharges: 95.85 },
+            { customerID: '3005-NFMTA', customer_name: '임하린', Churn_Probability: 0.780, issue_category: '해지', repeat_contacts_7d: 0, wait_time_sec: 57, call_duration_sec: 343, Contract: 'Month-to-month', MonthlyCharges: 98.8 },
+            { customerID: '2810-FTLEM', customer_name: '권민준', Churn_Probability: 0.806, issue_category: '해지', repeat_contacts_7d: 0, wait_time_sec: 17, call_duration_sec: 204, Contract: 'Month-to-month', MonthlyCharges: 50.15 },
+            { customerID: '4112-LUEIZ', customer_name: '황하린', Churn_Probability: 0.751, issue_category: '요금', repeat_contacts_7d: 1, wait_time_sec: 169, call_duration_sec: 130, Contract: 'Month-to-month', MonthlyCharges: 89.5 },
+            { customerID: '4201-JMNGR', customer_name: '장지우', Churn_Probability: 0.724, issue_category: '장애', repeat_contacts_7d: 6, wait_time_sec: 84, call_duration_sec: 703, Contract: 'Month-to-month', MonthlyCharges: 55.8 },
+            { customerID: '2070-FNEXE', customer_name: '최예준', Churn_Probability: 0.702, issue_category: '품질', repeat_contacts_7d: 3, wait_time_sec: 31, call_duration_sec: 366, Contract: 'Month-to-month', MonthlyCharges: 76.45 },
+            { customerID: '9025-ZRPVR', customer_name: '신지유', Churn_Probability: 0.673, issue_category: '해지', repeat_contacts_7d: 5, wait_time_sec: 64, call_duration_sec: 689, Contract: 'Month-to-month', MonthlyCharges: 18.95 },
+            { customerID: '0106-GHRQR', customer_name: '김서현', Churn_Probability: 0.565, issue_category: '품질', repeat_contacts_7d: 1, wait_time_sec: 30, call_duration_sec: 170, Contract: 'Month-to-month', MonthlyCharges: 71.4 },
+            { customerID: '4374-YMUSQ', customer_name: '정시우', Churn_Probability: 0.443, issue_category: '장애', repeat_contacts_7d: 0, wait_time_sec: 38, call_duration_sec: 454, Contract: 'One year', MonthlyCharges: 116.25 },
+            { customerID: '3675-EQOZA', customer_name: '윤예준', Churn_Probability: 0.410, issue_category: '장애', repeat_contacts_7d: 2, wait_time_sec: 18, call_duration_sec: 545, Contract: 'Month-to-month', MonthlyCharges: 20.65 },
+            { customerID: '7241-AJHFS', customer_name: '이하은', Churn_Probability: 0.393, issue_category: '품질', repeat_contacts_7d: 2, wait_time_sec: 26, call_duration_sec: 398, Contract: 'Month-to-month', MonthlyCharges: 87.65 },
+            { customerID: '6641-XRPSU', customer_name: '김지민', Churn_Probability: 0.360, issue_category: '장애', repeat_contacts_7d: 2, wait_time_sec: 9, call_duration_sec: 376, Contract: 'Month-to-month', MonthlyCharges: 70.0 },
+            { customerID: '5049-GLYVG', customer_name: '오서현', Churn_Probability: 0.309, issue_category: '품질', repeat_contacts_7d: 1, wait_time_sec: 25, call_duration_sec: 339, Contract: 'Month-to-month', MonthlyCharges: 20.6 },
+            { customerID: '0942-KOWSM', customer_name: '윤하린', Churn_Probability: 0.028, issue_category: '해지', repeat_contacts_7d: 0, wait_time_sec: 35, call_duration_sec: 288, Contract: 'Two year', MonthlyCharges: 80.8 },
+            { customerID: '1097-FSPVW', customer_name: '임지우', Churn_Probability: 0.009, issue_category: '요금', repeat_contacts_7d: 4, wait_time_sec: 209, call_duration_sec: 138, Contract: 'Month-to-month', MonthlyCharges: 54.55 },
+            { customerID: '8039-EQPIM', customer_name: '오도윤', Churn_Probability: 0.014, issue_category: '해지', repeat_contacts_7d: 2, wait_time_sec: 188, call_duration_sec: 602, Contract: 'Two year', MonthlyCharges: 60.25 },
+        ];
+        
+        customerData.sort((a, b) => b.Churn_Probability - a.Churn_Probability);
+        filteredData = [...customerData];
+        
+        updateKPIs();
+        renderCharts();
+        renderTable();
+    }
+
+    // Update KPI cards
+    function updateKPIs() {
+        const totalCustomers = customerData.length;
+        const riskCustomers = customerData.filter(c => c.Churn_Probability >= 0.7).length;
+        const avgWaitTime = Math.round(customerData.reduce((sum, c) => sum + c.wait_time_sec, 0) / totalCustomers);
+        const repeatRate = ((customerData.filter(c => c.repeat_contacts_7d > 0).length / totalCustomers) * 100).toFixed(1);
+
+        document.getElementById('totalCustomers').textContent = totalCustomers.toLocaleString();
+        document.getElementById('riskCustomers').textContent = riskCustomers;
+        document.getElementById('avgWaitTime').textContent = avgWaitTime + '초';
+        document.getElementById('repeatRate').textContent = repeatRate + '%';
+    }
+
+    // Render all charts
+    function renderCharts() {
+        renderCategoryChart();
+        renderChurnHistogram();
+        renderScatterChart();
+        renderContractChart();
+        renderWaitTimeChart();
+        renderCallDurationChart();
+    }
+
+    // Category Donut Chart
+    function renderCategoryChart() {
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        
+        const categories = {};
+        customerData.forEach(c => {
+            categories[c.issue_category] = (categories[c.issue_category] || 0) + 1;
         });
 
-        const topicBars = document.querySelectorAll('.topic-bar');
-        topicBars.forEach((bar, index) => {
-            const width = bar.style.width;
-            bar.style.width = '0%';
-            setTimeout(() => {
-                bar.style.width = width;
-            }, 300 + index * 150);
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(categories),
+                datasets: [{
+                    data: Object.values(categories),
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(16, 185, 129, 0.8)'
+                    ],
+                    borderColor: '#1e293b',
+                    borderWidth: 3,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#94a3b8',
+                            font: { size: 12, family: 'Pretendard' },
+                            padding: 16,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#94a3b8',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        padding: 12
+                    }
+                }
+            }
+        });
+    }
+
+    // Churn Probability Histogram
+    function renderChurnHistogram() {
+        const ctx = document.getElementById('churnHistogram').getContext('2d');
+        
+        const bins = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        customerData.forEach(c => {
+            const binIndex = Math.min(Math.floor(c.Churn_Probability * 10), 9);
+            bins[binIndex]++;
         });
 
-        // Show anomaly notification after 2 seconds
-        setTimeout(() => {
-            showAnomalyToast();
-        }, 2000);
-    });
+        const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+        gradient.addColorStop(0, 'rgba(239, 68, 68, 0.8)');
+        gradient.addColorStop(1, 'rgba(239, 68, 68, 0.2)');
 
-    // Search functionality
-    const searchInput = document.getElementById('customerSearch');
-    const searchDropdown = document.getElementById('searchDropdown');
-
-    searchInput.addEventListener('focus', () => {
-        searchDropdown.classList.add('active');
-    });
-
-    searchInput.addEventListener('blur', (e) => {
-        // Delay to allow click on dropdown items
-        setTimeout(() => {
-            searchDropdown.classList.remove('active');
-        }, 200);
-    });
-
-    searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            searchCustomer();
-        }
-    });
-
-    function searchCustomer() {
-        const customerId = searchInput.value.trim();
-        if (customerId) {
-            goToCustomer(customerId);
-        } else {
-            // Show dropdown with suggestions
-            searchDropdown.classList.add('active');
-        }
-    }
-
-    function goToCustomer(customerId) {
-        // Transition effect
-        document.body.style.opacity = '0';
-        document.body.style.transition = 'opacity 0.3s ease';
-
-        setTimeout(() => {
-            window.location.href = 'rag-dashboard.html?id=' + customerId;
-        }, 300);
-    }
-
-    // Anomaly Popup
-    function showAnomalyPopup() {
-        document.getElementById('anomalyPopup').classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closePopup() {
-        document.getElementById('anomalyPopup').classList.remove('active');
-        document.body.style.overflow = '';
-    }
-
-    // Toast Notifications
-    function showAnomalyToast() {
-        const toastContainer = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.innerHTML = `
-                <div class="toast-icon">🚨</div>
-                <div class="toast-content">
-                    <h4>이상 고객 발견!</h4>
-                    <p>4088-YLDSU · 이탈 위험도 92%</p>
-                </div>
-                <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
-            `;
-        toast.onclick = (e) => {
-            if (!e.target.classList.contains('toast-close')) {
-                showAnomalyPopup();
-                toast.remove();
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['0-10%', '10-20%', '20-30%', '30-40%', '40-50%', '50-60%', '60-70%', '70-80%', '80-90%', '90-100%'],
+                datasets: [{
+                    label: '고객 수',
+                    data: bins,
+                    backgroundColor: gradient,
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#94a3b8',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#64748b', font: { size: 10 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(51, 65, 85, 0.5)' },
+                        ticks: { color: '#64748b', font: { size: 11 } }
+                    }
+                }
             }
+        });
+    }
+
+    // Scatter Chart (Repeat Contacts vs Churn Probability)
+    function renderScatterChart() {
+        const ctx = document.getElementById('scatterChart').getContext('2d');
+        
+        const scatterData = customerData.map(c => ({
+            x: c.repeat_contacts_7d,
+            y: c.Churn_Probability,
+            category: c.issue_category
+        }));
+
+        const categoryColors = {
+            '요금': 'rgba(59, 130, 246, 0.7)',
+            '품질': 'rgba(139, 92, 246, 0.7)',
+            '해지': 'rgba(239, 68, 68, 0.7)',
+            '장애': 'rgba(245, 158, 11, 0.7)',
+            '해당 없음': 'rgba(107, 114, 128, 0.7)'
         };
-        toastContainer.appendChild(toast);
 
-        // Auto remove after 10 seconds
-        setTimeout(() => {
-            if (toast.parentElement) {
-                toast.style.animation = 'toastSlide 0.3s ease reverse';
-                setTimeout(() => toast.remove(), 300);
+        const datasets = Object.keys(categoryColors).map(category => ({
+            label: category,
+            data: scatterData.filter(d => d.category === category).map(d => ({ x: d.x, y: d.y })),
+            backgroundColor: categoryColors[category],
+            borderColor: categoryColors[category].replace('0.7', '1'),
+            borderWidth: 1,
+            pointRadius: 6,
+            pointHoverRadius: 8
+        }));
+
+        new Chart(ctx, {
+            type: 'scatter',
+            data: { datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#94a3b8',
+                            font: { size: 11 },
+                            usePointStyle: true,
+                            padding: 12
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#94a3b8',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return `반복문의: ${context.parsed.x}회, 이탈확률: ${(context.parsed.y * 100).toFixed(1)}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: '7일 내 반복 문의 횟수',
+                            color: '#94a3b8'
+                        },
+                        grid: { color: 'rgba(51, 65, 85, 0.5)' },
+                        ticks: { color: '#64748b' }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: '이탈 확률',
+                            color: '#94a3b8'
+                        },
+                        grid: { color: 'rgba(51, 65, 85, 0.5)' },
+                        ticks: { 
+                            color: '#64748b',
+                            callback: function(value) {
+                                return (value * 100) + '%';
+                            }
+                        },
+                        min: 0,
+                        max: 1
+                    }
+                }
             }
-        }, 10000);
+        });
     }
 
-    // Close popup when clicking overlay
-    document.getElementById('anomalyPopup').addEventListener('click', (e) => {
-        if (e.target.id === 'anomalyPopup') {
-            closePopup();
-        }
-    });
+    // Contract Type Bar Chart
+    function renderContractChart() {
+        const ctx = document.getElementById('contractChart').getContext('2d');
+        
+        const contractData = {};
+        const contractChurn = {};
+        
+        customerData.forEach(c => {
+            contractData[c.Contract] = (contractData[c.Contract] || 0) + 1;
+            if (c.Churn_Probability >= 0.5) {
+                contractChurn[c.Contract] = (contractChurn[c.Contract] || 0) + 1;
+            }
+        });
 
-    // ESC key to close popup
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closePopup();
+        const labels = Object.keys(contractData);
+        const churnRates = labels.map(label => 
+            ((contractChurn[label] || 0) / contractData[label] * 100).toFixed(1)
+        );
+
+        const gradient = ctx.createLinearGradient(0, 280, 0, 0);
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.2)');
+        gradient.addColorStop(1, 'rgba(99, 102, 241, 0.8)');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels.map(l => {
+                    if (l === 'Month-to-month') return '월별 계약';
+                    if (l === 'One year') return '1년 계약';
+                    if (l === 'Two year') return '2년 계약';
+                    return l;
+                }),
+                datasets: [{
+                    label: '이탈률 (%)',
+                    data: churnRates,
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.7)',
+                        'rgba(245, 158, 11, 0.7)',
+                        'rgba(16, 185, 129, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(239, 68, 68, 1)',
+                        'rgba(245, 158, 11, 1)',
+                        'rgba(16, 185, 129, 1)'
+                    ],
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    barThickness: 60
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#94a3b8',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return `이탈률: ${context.raw}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8', font: { size: 12 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(51, 65, 85, 0.5)' },
+                        ticks: { 
+                            color: '#64748b',
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        max: 100
+                    }
+                }
+            }
+        });
+    }
+
+    // Wait Time Distribution Chart
+    function renderWaitTimeChart() {
+        const ctx = document.getElementById('waitTimeChart').getContext('2d');
+        
+        // Create bins for wait time (0-30, 30-60, 60-90, 90-120, 120-150, 150-180, 180+)
+        const bins = [0, 0, 0, 0, 0, 0, 0];
+        const binLabels = ['0-30초', '30-60초', '60-90초', '90-120초', '120-150초', '150-180초', '180초+'];
+        
+        customerData.forEach(c => {
+            const waitTime = c.wait_time_sec;
+            if (waitTime < 30) bins[0]++;
+            else if (waitTime < 60) bins[1]++;
+            else if (waitTime < 90) bins[2]++;
+            else if (waitTime < 120) bins[3]++;
+            else if (waitTime < 150) bins[4]++;
+            else if (waitTime < 180) bins[5]++;
+            else bins[6]++;
+        });
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, 'rgba(20, 184, 166, 0.8)');
+        gradient.addColorStop(1, 'rgba(20, 184, 166, 0.2)');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: binLabels,
+                datasets: [{
+                    label: '고객 수',
+                    data: bins,
+                    backgroundColor: gradient,
+                    borderColor: 'rgba(20, 184, 166, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#94a3b8',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#64748b', font: { size: 9 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(51, 65, 85, 0.5)' },
+                        ticks: { color: '#64748b', font: { size: 10 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // Call Duration Distribution Chart
+    function renderCallDurationChart() {
+        const ctx = document.getElementById('callDurationChart').getContext('2d');
+        
+        // Create bins for call duration (0-2분, 2-5분, 5-10분, 10-15분, 15-20분, 20분+)
+        const bins = [0, 0, 0, 0, 0, 0];
+        const binLabels = ['0-2분', '2-5분', '5-10분', '10-15분', '15-20분', '20분+'];
+        
+        customerData.forEach(c => {
+            const duration = c.call_duration_sec / 60; // Convert to minutes
+            if (duration < 2) bins[0]++;
+            else if (duration < 5) bins[1]++;
+            else if (duration < 10) bins[2]++;
+            else if (duration < 15) bins[3]++;
+            else if (duration < 20) bins[4]++;
+            else bins[5]++;
+        });
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.8)');
+        gradient.addColorStop(1, 'rgba(99, 102, 241, 0.2)');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: binLabels,
+                datasets: [{
+                    label: '고객 수',
+                    data: bins,
+                    backgroundColor: gradient,
+                    borderColor: 'rgba(99, 102, 241, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#94a3b8',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#64748b', font: { size: 10 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(51, 65, 85, 0.5)' },
+                        ticks: { color: '#64748b', font: { size: 10 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // Render customer table
+    function renderTable() {
+        const tbody = document.getElementById('customerTableBody');
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const pageData = filteredData.slice(startIndex, endIndex);
+
+        tbody.innerHTML = pageData.map(customer => {
+            const riskClass = customer.Churn_Probability >= 0.7 ? 'high' : 
+                              customer.Churn_Probability >= 0.4 ? 'medium' : 'low';
+            const riskLabel = riskClass === 'high' ? '고위험' : 
+                              riskClass === 'medium' ? '중위험' : '저위험';
+            
+            const issueClass = customer.issue_category === '요금' ? 'billing' :
+                               customer.issue_category === '품질' ? 'quality' :
+                               customer.issue_category === '해지' ? 'churn' : 'fault';
+
+            return `
+                <tr onclick="viewCustomerDetail('${customer.customerID}')">
+                    <td><span class="customer-id">${customer.customerID}</span></td>
+                    <td><span class="customer-name">${customer.customer_name}</span></td>
+                    <td>
+                        <span class="risk-badge ${riskClass}">
+                            ${(customer.Churn_Probability * 100).toFixed(1)}% ${riskLabel}
+                        </span>
+                    </td>
+                    <td><span class="issue-badge ${issueClass}">${customer.issue_category}</span></td>
+                    <td>
+                        <span class="contact-count">
+                            <span class="contact-dot"></span>
+                            ${customer.repeat_contacts_7d}회
+                        </span>
+                    </td>
+                    <td>${customer.wait_time_sec}초</td>
+                    <td>${customer.Contract === 'Month-to-month' ? '월별' : 
+                         customer.Contract === 'One year' ? '1년' : '2년'}</td>
+                    <td>₩${customer.MonthlyCharges.toLocaleString()}</td>
+                </tr>
+            `;
+        }).join('');
+
+        updatePagination();
+    }
+
+    // Update pagination
+    function updatePagination() {
+        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage + 1;
+        const endIndex = Math.min(currentPage * itemsPerPage, filteredData.length);
+
+        document.getElementById('paginationInfo').textContent = 
+            `총 ${filteredData.length}건 중 ${startIndex} - ${endIndex} 표시`;
+
+        const paginationButtons = document.getElementById('paginationButtons');
+        let buttonsHTML = '';
+
+        // Previous button
+        buttonsHTML += `<button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                buttonsHTML += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+            } else if (i === currentPage - 2 || i === currentPage + 2) {
+                buttonsHTML += `<button class="page-btn" disabled>...</button>`;
+            }
         }
+
+        // Next button
+        buttonsHTML += `<button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>›</button>`;
+
+        paginationButtons.innerHTML = buttonsHTML;
+    }
+
+    // Change page
+    function changePage(page) {
+        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+        if (page >= 1 && page <= totalPages) {
+            currentPage = page;
+            renderTable();
+        }
+    }
+
+    // Filter by risk level
+    function filterRisk(level) {
+        currentFilter = level;
+        currentPage = 1;
+
+        // Update filter button styles
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+
+        if (level === 'all') {
+            filteredData = [...customerData];
+        } else if (level === 'high') {
+            filteredData = customerData.filter(c => c.Churn_Probability >= 0.7);
+        } else if (level === 'medium') {
+            filteredData = customerData.filter(c => c.Churn_Probability >= 0.4 && c.Churn_Probability < 0.7);
+        } else {
+            filteredData = customerData.filter(c => c.Churn_Probability < 0.4);
+        }
+
+        renderTable();
+    }
+
+    // Search customers
+    function searchCustomers() {
+        const searchTerm = document.getElementById('customerSearchInput').value.toLowerCase();
+        currentPage = 1;
+
+        if (searchTerm === '') {
+            filterRisk(currentFilter);
+            return;
+        }
+
+        filteredData = customerData.filter(c => 
+            c.customerID.toLowerCase().includes(searchTerm) ||
+            c.customer_name.toLowerCase().includes(searchTerm)
+        );
+
+        renderTable();
+    }
+
+    // View customer detail
+    function viewCustomerDetail(customerId) {
+        // Navigate to customer detail page or show modal
+        console.log('View customer:', customerId);
+        // window.location.href = `/customer/${customerId}`;
+    }
+
+    // Refresh data
+    function refreshData() {
+        location.reload();
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        loadSampleData();
     });
 </script>
 </body>
 </html>
-
