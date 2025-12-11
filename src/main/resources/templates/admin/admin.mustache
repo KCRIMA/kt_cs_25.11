@@ -613,6 +613,75 @@
             color: var(--text-primary) !important;
             box-shadow: var(--shadow-lg) !important;
         }
+
+        /* 로그인/로그아웃 스타일 */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .auth-btn {
+            padding: 6px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .auth-btn:hover {
+            background: var(--primary-light);
+            color: var(--primary-blue);
+            border-color: var(--primary-blue);
+        }
+
+        /* 로그인 드롭다운 메뉴 */
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: 40px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            display: none;
+            flex-direction: column;
+            min-width: 100px;
+            z-index: 999;
+            overflow: hidden;
+        }
+
+        .dropdown-menu.show {
+            display: flex;
+        }
+
+        .dropdown-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .dropdown-item:hover {
+            background: var(--primary-light);
+            color: var(--primary-blue);
+        }
+
+        .dropdown-item + .dropdown-item {
+            border-top: 1px solid var(--border-color);
+        }
     </style>
 </head>
 <body>
@@ -624,12 +693,17 @@
             <span class="header-badge">실시간 모니터링</span>
         </div>
         <div class="header-actions">
-            <div class="date-badge">
-                📅 <span id="currentDate"></span>
+            <!-- 로그인/로그아웃 -->
+            <div class="user-info" id="userInfo">
+                <span class="user-name" id="userName">admin</span>
+                <button class="auth-btn" id="authButton" onclick="logoutOrOpenMenu()">
+                    로그아웃
+                </button>
+                <div class="dropdown-menu" id="loginDropdown">
+                    <div class="dropdown-item" onclick="loginAsUser()">홍길동</div>
+                    <div class="dropdown-item" onclick="loginAsAdmin()">admin</div>
+                </div>
             </div>
-            <button class="refresh-btn" onclick="refreshData()">
-                🔄
-            </button>
         </div>
     </header>
 
@@ -816,13 +890,6 @@
     let currentPage = 1;
     const itemsPerPage = 10;
     let currentFilter = 'all';
-
-    // Set current date
-    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
 
     // API Base URL (FastAPI 서버)
     const API_BASE_URL = 'http://localhost:8000';
@@ -1731,6 +1798,63 @@
     document.addEventListener('DOMContentLoaded', () => {
         // 먼저 API 연동 시도, 실패 시 샘플 데이터 사용
         loadData();
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // 로그인/로그아웃 기능
+    // ═══════════════════════════════════════════════════════════════
+    
+    let isLoggedIn = true;
+
+    function logoutOrOpenMenu() {
+        if (isLoggedIn) {
+            logout();
+        } else {
+            toggleDropdown();
+        }
+    }
+
+    function logout() {
+        isLoggedIn = false;
+        document.getElementById('userName').style.display = 'none';
+        const btn = document.getElementById('authButton');
+        btn.textContent = "로그인 ⌵";
+        document.getElementById('loginDropdown').classList.remove('show');
+    }
+
+    function toggleDropdown() {
+        const menu = document.getElementById('loginDropdown');
+        menu.classList.toggle('show');
+    }
+
+    function loginAsUser() {
+        isLoggedIn = true;
+        document.getElementById('userName').textContent = '홍길동';
+        document.getElementById('userName').style.display = 'inline';
+        document.getElementById('authButton').textContent = "로그아웃";
+        document.getElementById('loginDropdown').classList.remove('show');
+        
+        // 메인 페이지로 이동
+        window.location.href = "/";
+    }
+
+    function loginAsAdmin() {
+        isLoggedIn = true;
+        document.getElementById('userName').textContent = 'admin';
+        document.getElementById('userName').style.display = 'inline';
+        document.getElementById('authButton').textContent = "로그아웃";
+        document.getElementById('loginDropdown').classList.remove('show');
+    }
+
+    // 바깥 클릭 시 드롭다운 닫기
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('loginDropdown');
+        const button = document.getElementById('authButton');
+        const userInfo = document.getElementById('userInfo');
+
+        if (!userInfo.contains(event.target)) {
+            dropdown.classList.remove('show');
+        }
     });
 </script>
 </body>
