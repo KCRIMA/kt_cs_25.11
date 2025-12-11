@@ -750,7 +750,7 @@
             <div class="card-header">
                 <h3 class="card-title">
                     <span class="card-title-icon">📊</span>
-                    문의 카테고리 분포
+                    문의유형 분포
                 </h3>
                 <div class="card-menu">
                     <button class="card-menu-btn">⋮</button>
@@ -766,7 +766,7 @@
             <div class="card-header">
                 <h3 class="card-title">
                     <span class="card-title-icon">📈</span>
-                    이탈 확률 분포
+                    고객 이탈률 분포
                 </h3>
                 <div class="card-menu">
                     <button class="card-menu-btn">⋮</button>
@@ -782,7 +782,7 @@
             <div class="card-header">
                 <h3 class="card-title">
                     <span class="card-title-icon">🔴</span>
-                    반복문의 vs 이탈확률
+                    반복문의별 이탈률
                 </h3>
                 <div class="card-menu">
                     <button class="card-menu-btn">⋮</button>
@@ -853,8 +853,8 @@
                 <button class="filter-btn active" onclick="filterRisk('all')">전체</button>
                 <button class="filter-btn" onclick="filterRisk('high')">고위험</button>
                 <button class="filter-btn" onclick="filterRisk('medium')">중위험</button>
-                <button class="filter-btn" onclick="filterRisk('low')">저위험</button>
-                <input type="text" class="search-input" placeholder="🔍 고객 검색..." id="customerSearchInput" oninput="searchCustomers()">
+                <button class="filter-btn" onclick="filterRisk('low')">정상</button>
+                <input type="text" class="search-input" placeholder="🔍 고객 검색" id="customerSearchInput" oninput="searchCustomers()">
             </div>
         </div>
         <table class="customer-table">
@@ -862,10 +862,10 @@
                 <tr>
                     <th>고객 ID</th>
                     <th>고객명</th>
-                    <th>이탈 확률</th>
+                    <th>이탈률</th>
                     <th>문의 유형</th>
                     <th>반복 문의</th>
-                    <th>대기 시간</th>
+                    <th>최근 대기 시간</th>
                     <th>계약 유형</th>
                     <th>월 요금</th>
                 </tr>
@@ -890,6 +890,9 @@
     let currentPage = 1;
     const itemsPerPage = 10;
     let currentFilter = 'all';
+
+    // 환율 (USD → KRW)
+    const USD_TO_KRW = 1470;
 
     // API Base URL (FastAPI 서버)
     const API_BASE_URL = 'http://localhost:8000';
@@ -1134,8 +1137,12 @@
 
     function renderContractChartFromAPI(contractData) {
         const ctx = document.getElementById('contractChart').getContext('2d');
-        
-        const labels = Object.keys(contractData).map(l => l === 'Month-to-month' ? '월별' : l === 'One year' ? '1년' : '2년');
+
+        const labels = Object.keys(contractData).map(l =>
+                l === 'Month-to-month' ? '무약정' :
+                        l === 'One year' ? '1년' :
+                                '2년'
+        );
         const churnRates = Object.values(contractData).map(v => v.avg_churn_probability);
 
         new Chart(ctx, {
@@ -1468,9 +1475,9 @@
             type: 'bar',
             data: {
                 labels: labels.map(l => {
-                    if (l === 'Month-to-month') return '월별 계약';
-                    if (l === 'One year') return '1년 계약';
-                    if (l === 'Two year') return '2년 계약';
+                    if (l === 'Month-to-month') return '무약정';
+                    if (l === 'One year') return '1년 약정';
+                    if (l === 'Two year') return '2년 약정';
                     return l;
                 }),
                 datasets: [{
@@ -1665,38 +1672,45 @@
         const pageData = filteredData.slice(startIndex, endIndex);
 
         tbody.innerHTML = pageData.map(customer => {
-            const riskClass = customer.Churn_Probability >= 0.7 ? 'high' : 
-                              customer.Churn_Probability >= 0.4 ? 'medium' : 'low';
-            const riskLabel = riskClass === 'high' ? '고위험' : 
-                              riskClass === 'medium' ? '중위험' : '저위험';
-            
+            const riskClass = customer.Churn_Probability >= 0.7 ? 'high' :
+                    customer.Churn_Probability >= 0.4 ? 'medium' : 'low';
+            const riskLabel = riskClass === 'high' ? '고위험' :
+                    riskClass === 'medium' ? '중위험' : '정상';
+
             const issueClass = customer.issue_category === '요금' ? 'billing' :
-                               customer.issue_category === '품질' ? 'quality' :
-                               customer.issue_category === '해지' ? 'churn' : 'fault';
+                    customer.issue_category === '품질' ? 'quality' :
+                            customer.issue_category === '해지' ? 'churn' : 'fault';
+
+            // 하이픈 제거된 고객 ID
+            const displayCustomerId = customer.customerID.replace(/-/g, '');
+
+            // 월 요금 원화 환산
+            const monthlyWon = Math.round(customer.MonthlyCharges * USD_TO_KRW);
 
             return `
-                <tr onclick="viewCustomerDetail('${customer.customerID}')">
-                    <td><span class="customer-id">${customer.customerID}</span></td>
-                    <td><span class="customer-name">${customer.customer_name}</span></td>
-                    <td>
-                        <span class="risk-badge ${riskClass}">
-                            ${(customer.Churn_Probability * 100).toFixed(1)}% ${riskLabel}
-                        </span>
-                    </td>
-                    <td><span class="issue-badge ${issueClass}">${customer.issue_category}</span></td>
-                    <td>
-                        <span class="contact-count">
-                            <span class="contact-dot"></span>
-                            ${customer.repeat_contacts_7d}회
-                        </span>
-                    </td>
-                    <td>${customer.wait_time_sec}초</td>
-                    <td>${customer.Contract === 'Month-to-month' ? '월별' : 
-                         customer.Contract === 'One year' ? '1년' : '2년'}</td>
-                    <td>₩${customer.MonthlyCharges.toLocaleString()}</td>
-                </tr>
-            `;
+        <tr onclick="viewCustomerDetail('${customer.customerID}')">
+            <td><span class="customer-id">${displayCustomerId}</span></td>
+            <td><span class="customer-name">${customer.customer_name}</span></td>
+            <td>
+                <span class="risk-badge ${riskClass}">
+                    ${(customer.Churn_Probability * 100).toFixed(1)}% ${riskLabel}
+                </span>
+            </td>
+            <td><span class="issue-badge ${issueClass}">${customer.issue_category}</span></td>
+            <td>
+                <span class="contact-count">
+                    <span class="contact-dot"></span>
+                    ${customer.repeat_contacts_7d}회
+                </span>
+            </td>
+            <td>${customer.wait_time_sec}초</td>
+            <td>${customer.Contract === 'Month-to-month' ? '무약정' :
+                    customer.Contract === 'One year' ? '1년' : '2년'}</td>
+            <td>${monthlyWon.toLocaleString()}원</td>
+        </tr>
+    `;
         }).join('');
+
 
         updatePagination();
     }
@@ -1803,7 +1817,7 @@
     // ═══════════════════════════════════════════════════════════════
     // 로그인/로그아웃 기능
     // ═══════════════════════════════════════════════════════════════
-    
+
     let isLoggedIn = true;
 
     function logoutOrOpenMenu() {
@@ -1815,11 +1829,8 @@
     }
 
     function logout() {
-        isLoggedIn = false;
-        document.getElementById('userName').style.display = 'none';
-        const btn = document.getElementById('authButton');
-        btn.textContent = "로그인 ⌵";
-        document.getElementById('loginDropdown').classList.remove('show');
+        // 로그아웃 시 바로 Spring Boot 메인 페이지로 이동
+        window.location.href = "http://localhost:8080/main";
     }
 
     function toggleDropdown() {

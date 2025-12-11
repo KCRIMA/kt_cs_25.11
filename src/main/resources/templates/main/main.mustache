@@ -1557,9 +1557,38 @@
         //  방금 조회한 고객의 히스토리 row를 기억
         let currentHistoryRow = null;
 
+        let incomingCallTimer = null;
+
+        let agentStatus = 'ready'; // 글로벌 상담사 상태
+
         // 대기 버튼 눌렀을 때
+        document.getElementById('btnAway').addEventListener('click', () => {
+            agentStatus = 'away';
+
+            // 1) 새로운 콜 생성 타이머 중단
+            if (incomingCallTimer) {
+                clearTimeout(incomingCallTimer);
+                incomingCallTimer = null;
+            }
+
+            // 2) 대기 고객 토스트 감추기
+            hideCallRequestToast();
+
+            console.log('상담사 상태: 이석 → 신규 콜 생성 중단 + 토스트 숨김');
+        });
+
         document.getElementById('btnReady').addEventListener('click', () => {
-            waitStartTime = new Date();  // 대기 시작
+            agentStatus = 'ready';
+
+            waitStartTime = new Date();
+
+            // 1) 대기 고객 토스트 다시 표시
+            showCallRequestToast();
+
+            // 2) 콜 생성 스케줄 재시작
+            scheduleNextIncomingCall();
+
+            console.log('상담사 상태: 대기 → 신규 콜 생성 재시작');
         });
 
 
@@ -2162,27 +2191,23 @@
             function scheduleNextIncomingCall() {
                 const delay = (5 + Math.random() * 10) * 1000;
 
-                setTimeout(() => {
+                incomingCallTimer = setTimeout(() => {
 
-                    // 🔥 8명 이상이면 더 이상 새 전화 안 받음
-                    if (callQueue.length >= 8) {
-                        console.log("대기열이 최대 8명입니다. 새로운 전화 수신 중단.");
-                        return;      // ★ 더 이상 아래 코드 실행 안 함
-                    }
+                    // 이석 상태일 때 → 신규 콜 생성 중단
+                    if (agentStatus === 'away') return;
 
-                    const newNumber = getRandomContactNumber();
-                    if (newNumber) {
-                        if (!callQueue.includes(newNumber)) {
+                    if (callQueue.length < 8) {
+                        const newNumber = getRandomContactNumber();
+                        if (newNumber && !callQueue.includes(newNumber)) {
                             callQueue.push(newNumber);
                         }
                         showCallRequestToast();
                     }
 
-                    // 🔁 다음 스케줄 계속 반복
                     scheduleNextIncomingCall();
-
                 }, delay);
             }
+
 
 
 
