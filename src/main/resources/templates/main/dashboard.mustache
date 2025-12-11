@@ -79,13 +79,14 @@
             margin-bottom: 8px;
         }
 
-        .logo {
+        .header-left {
             display: flex;
             align-items: center;
             gap: 12px;
+            min-width: 0;
         }
 
-        .logo-icon {
+        .brand-logo {
             width: 40px;
             height: 40px;
             background: var(--gradient-info);
@@ -97,13 +98,73 @@
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         }
 
-        .logo h1 {
+        .brand-info {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.3;
+        }
+
+        .brand-name {
             font-size: 22px;
             font-weight: 600;
             background: linear-gradient(135deg, #1E293B 0%, #475569 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+        }
+        .agent-meta {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 6px 6px 18px;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            background: var(--bg-secondary);
+            box-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.06);
+            width: 35%;
+        }
+
+        .search-bar input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        .search-bar input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            padding: 0;                    /* 이미지 딱 맞게 */
+            background: transparent;       /* PNG 자체 디자인 사용 */
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            box-shadow: none;              /* 필요 없으면 제거, 유지하고 싶으면 남겨도 됨 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-btn .search-icon {
+            width: 25px;   /* PNG 크기에 맞게 조절 */
+            height: 25px;
+            display: block;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-1px);
         }
 
         .header-right {
@@ -112,16 +173,71 @@
             gap: 16px;
         }
 
-        .status-badge {
+        .call-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .call-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .call-btn.primary {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
+        }
+
+        .call-btn.safe {
+            background: rgba(5, 150, 105, 0.15);
+            border-color: rgba(5, 150, 105, 0.3);
+            color: var(--accent-green);
+        }
+
+        .call-btn.muted {
+            background: rgba(148, 163, 184, 0.15);
+            border-color: rgba(148, 163, 184, 0.4);
+            color: var(--text-secondary);
+        }
+
+        .call-btn.warning {
+            background: rgba(234, 88, 12, 0.15);
+            border-color: rgba(234, 88, 12, 0.35);
+            color: var(--accent-orange);
+        }
+
+        .call-btn.danger {
+            background: rgba(220, 38, 38, 0.15);
+            border-color: rgba(220, 38, 38, 0.35);
+            color: var(--accent-red);
+        }
+
+        .call-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
+        }
+
+        .status-chip {
             display: flex;
             align-items: center;
             gap: 8px;
             padding: 8px 16px;
-            background: rgba(5, 150, 105, 0.08);
-            border: 1px solid rgba(5, 150, 105, 0.2);
             border-radius: 20px;
             font-size: 13px;
-            color: var(--accent-green);
         }
 
         .status-dot {
@@ -135,6 +251,32 @@
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
+        }
+
+        /* ★ 통화 종료 텍스트 깜빡임 효과 */
+        .status-blink {
+            animation: statusBlink 0.5s ease-in-out infinite;
+        }
+
+        @keyframes statusBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
+        .context-btn {
+            padding: 8px 18px;
+            border-radius: 999px;
+            border: 1px dashed var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .context-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
         }
 
         /* Panels */
@@ -272,8 +414,6 @@
             stroke-width: 8;
             stroke-linecap: round;
             stroke-dasharray: 226.2;
-            stroke-dashoffset: 18.1;
-            animation: gaugeAnimation 1.5s ease-out forwards;
             filter: drop-shadow(0 0 8px var(--accent-red-glow));
         }
 
@@ -308,6 +448,16 @@
             font-weight: 600;
             border-radius: 4px;
             text-transform: uppercase;
+        }
+
+        .risk-badge.risk-green {
+            background: var(--accent-green);
+        }
+        .risk-badge.risk-orange {
+            background: var(--accent-orange);
+        }
+        .risk-badge.risk-red {
+            background: var(--accent-red);
         }
 
         /* Risk Factors */
@@ -827,6 +977,19 @@
                 gap: 16px;
                 text-align: center;
             }
+            .header-right {
+                flex-wrap: wrap;
+                justify-content: flex-start;
+            }
+
+            .call-actions {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .search-bar {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -836,32 +999,88 @@
 <div class="dashboard">
     <!-- Header -->
     <header class="header">
-        <div class="logo">
-            <div class="logo-icon">🔮</div>
-            <h1>RAG Dashboard</h1>
-        </div>
-        <div class="header-right">
-            <div class="status-badge">
-                <span class="status-dot"></span>
-                실시간 분석 중
+        <div class="header-left">
+            <img src="/img/FSE_logo.png" alt="FORESEE logo" class="brand-logo">
+            <div class="brand-info">
+                <span class="brand-name">㈜FORESEE</span>
+                <span class="agent-meta"> 홍길동님 (3001)</span>
             </div>
+
+        </div>
+
+        <form class="search-bar" action="/dashboard" method="get">
+            <!-- name="customer_id" 로 FastAPI에 넘어감 -->
+            <input
+                    type="text"
+                    name="customer_id"
+                    placeholder="전화번호 또는 고객명을 입력하세요. ex)1113-IUJYX, 1013317181"
+                    aria-label="전화번호 검색"
+                    value="{{searchKeyword}}"
+
+            >
+            <button class="search-btn" type="submit" aria-label="검색">
+                <img src="/img/search_button.png" alt="검색" class="search-icon">
+            </button>
+        </form>
+
+
+        <div class="header-right">
+            <div class="call-actions">
+                <button class="call-btn primary" >📞 걸기</button>
+                <button class="call-btn safe call-start" >📞 받기</button>
+                <button class="call-btn muted">🔇 음소거</button>
+                <button class="call-btn muted call-hold">⏸️ 보류</button>
+                <button class="call-btn warning call-transfer">🔁 넘겨주기</button>
+                <button class="call-btn danger call-end">🔚 끊기</button>
+            </div>
+            <div class="status-chip">
+                <span class="status-dot"></span>
+                <span class="status-label">통화시간</span>
+                <span id="call-timer">00:00</span>
+            </div>
+
         </div>
     </header>
 
     <!-- Left Panel -->
     <aside class="panel left-panel">
-        <div class="section-title">고객 요약 정보</div>
+        <div class="section-title">고객 정보</div>
 
-        <div class="customer-id">ID: 4088-YLDSU</div>
+        <div class="customer-id">
+            ID:
+            {{#hasCustomer}}
+                {{customer_id}}
+            {{/hasCustomer}}
+            {{^hasCustomer}}
+                조회된 결과 없음
+            {{/hasCustomer}}
+        </div>
+
+
+
 
         <div class="info-grid">
             <div class="info-item">
-                <span class="info-label">계약 유형</span>
-                <span class="info-value">One-year</span>
+                <span class="info-label">가입 기간</span>
+                <span class="info-value">
+                    {{#hasCustomer}}
+                        {{customer.tenure}}개월
+                    {{/hasCustomer}}
+                                {{^hasCustomer}}
+                                    -
+                                {{/hasCustomer}}
+                </span>
             </div>
             <div class="info-item">
                 <span class="info-label">결제 방식</span>
-                <span class="info-value">Electronic Check</span>
+                <span class="info-value">
+                    {{#hasCustomer}}
+                        {{paymentMethod}}
+                    {{/hasCustomer}}
+                                {{^hasCustomer}}
+                                    -
+                                {{/hasCustomer}}
+                </span>
             </div>
         </div>
 
@@ -872,13 +1091,31 @@
                 <div class="risk-gauge">
                     <svg width="80" height="80" viewBox="0 0 80 80">
                         <circle class="risk-gauge-bg" cx="40" cy="40" r="36"/>
-                        <circle class="risk-gauge-fill" cx="40" cy="40" r="36"/>
+                        <circle
+                                class="risk-gauge-fill"
+                                cx="40" cy="40" r="36"
+                                style="stroke-dashoffset: {{gaugeOffset}};"
+                        />
                     </svg>
-                    <span class="risk-percentage">92%</span>
+                    <span class="risk-percentage">
+                        {{#hasCustomer}}
+                            {{negProbPercent}}
+                        {{/hasCustomer}}
+                        {{^hasCustomer}}
+                            -
+                        {{/hasCustomer}}
+                    </span>
                 </div>
                 <div class="risk-info">
                     <h3>이탈 위험도</h3>
-                    <span class="risk-badge">HIGH RISK</span>
+                    <span class="risk-badge risk-{{riskColor}}">
+                        {{#hasCustomer}}
+                            {{riskLabel}}
+                        {{/hasCustomer}}
+                        {{^hasCustomer}}
+                            -
+                        {{/hasCustomer}}
+                    </span>
                 </div>
             </div>
         </div>
@@ -1081,6 +1318,112 @@
             }, 2000);
         });
     }
+
+    // 통화 타이머 관련 코드
+    let timerInterval = null;       // setInterval 핸들
+    let elapsedSeconds = 0;         // 누적 통화 시간(초 단위)
+    let statusTimeout = null;       // 통화종료 → 온라인 복귀용 타이머
+
+    const timerElement = document.getElementById('call-timer');
+    const statusLabel  = document.querySelector('.status-label');
+
+    function formatTime(seconds) {
+        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const s = String(seconds % 60).padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    function renderTimer() {
+        if (timerElement) {
+            timerElement.textContent = formatTime(elapsedSeconds);
+        }
+    }
+
+    function startTimer() {
+        // 통화종료 → 온라인으로 돌아가는 타임아웃이 있으면 취소
+        if (statusTimeout) {
+            clearTimeout(statusTimeout);
+            statusTimeout = null;
+        }
+        // 통화중 상태로 전환 + 깜빡임 제거
+        if (statusLabel) {
+            statusLabel.textContent = '통화중';
+            statusLabel.classList.remove('status-blink');
+        }
+
+        // 이미 돌고 있으면 새로 시작하지 않음
+        if (!timerInterval) {
+            // 상태 문구를 통화중으로 바꾸고 싶으면 ↓ 주석 해제
+            // if (statusLabel) statusLabel.textContent = '통화중';
+            timerInterval = setInterval(() => {
+                elapsedSeconds += 1;
+                renderTimer();
+            }, 1000);
+        }
+    }
+
+    function pauseTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+
+    function resetTimer() {
+        pauseTimer();
+        elapsedSeconds = 0;
+        renderTimer();
+
+        // 통화 종료 → 2초간 깜빡이며 표시 후 온라인으로 복귀
+        if (statusLabel) {
+            // 이전 상태 타임아웃 있으면 정리
+            if (statusTimeout) {
+                clearTimeout(statusTimeout);
+                statusTimeout = null;
+            }
+
+            statusLabel.textContent = '통화종료';          //
+            statusLabel.classList.add('status-blink');     //  깜빡임 시작
+
+            statusTimeout = setTimeout(() => {             //  2초 후 통화시간
+                statusLabel.textContent = '통화시간';
+                statusLabel.classList.remove('status-blink');
+                statusTimeout = null;
+            }, 2000);
+        }
+
+    }
+
+    //  버튼에 이벤트 연결
+    window.addEventListener('DOMContentLoaded', () => {
+        // 걸기 / 받기 → 타이머 시작(또는 재시작)
+        document.querySelectorAll('.call-start').forEach(btn => {
+            btn.addEventListener('click', startTimer);
+        });
+
+        // 보류 → 일시정지
+        const holdBtn = document.querySelector('.call-hold');
+        if (holdBtn) {
+            holdBtn.addEventListener('click', pauseTimer);
+        }
+
+        // 넘겨주기 / 끊기 → 타이머 초기화
+        const transferBtn = document.querySelector('.call-transfer');
+        const endBtn = document.querySelector('.call-end');
+
+        if (transferBtn) {
+            transferBtn.addEventListener('click', resetTimer);
+        }
+        if (endBtn) {
+            endBtn.addEventListener('click', resetTimer);
+        }
+
+        // 초기 표시
+        renderTimer();
+    });
+    // ★★★ 통화 타이머 코드 끝 ★★★
+
+
 </script>
 </body>
 </html>
