@@ -1200,7 +1200,7 @@
                                 <div class="card-title">📞 고객 정보</div>
                                 <div style="display: flex; gap: 8px;">
                                     <button class="btn-control" onclick="resetForm()">초기화</button>
-                                    <button class="btn-control active" onclick="searchCustomer()">고객조회</button>
+                                    <button class="btn-control active" onclick="searchCustomer()">조회</button>
                                 </div>
                             </div>
 
@@ -1210,11 +1210,11 @@
                                     <input type="text" id="customerName" placeholder="이름 입력">
                                 </div>
                                 <div class="form-group">
-                                    <label>핸드폰</label>
-                                    <input type="text" id="customerPhone" placeholder="010-0000-0000">
+                                    <label>연락처</label>
+                                    <input type="text" id="customerPhone" placeholder="010-1234-5678">
                                 </div>
                                 <div class="form-group">
-                                    <label>자택전화</label>
+                                    <label>비상 연락처</label>
                                     <input type="text" id="homePhone" placeholder="-">
                                 </div>
 
@@ -1223,7 +1223,7 @@
                                     <div class="checkbox-group">
                                         <label class="checkbox-item"><input type="checkbox" checked> 전체</label>
                                         <label class="checkbox-item"><input type="checkbox"> 전화</label>
-                                        <label class="checkbox-item"><input type="checkbox"> SMS</label>
+                                        <label class="checkbox-item"><input type="checkbox"> 문자</label>
                                         <label class="checkbox-item"><input type="checkbox"> 이메일</label>
                                     </div>
                                 </div>
@@ -1238,16 +1238,16 @@
                                     <input type="text" id="customerId" placeholder="-" readonly style="background:#f1f5f9;">
                                 </div>
                                 <div class="form-group">
-                                    <label>계약유형</label>
+                                    <label>약정</label>
                                     <input type="text" id="contractType" placeholder="-" readonly style="background:#f1f5f9;">
                                 </div>
                                 <div class="form-group">
-                                    <label>가입기간</label>
+                                    <label>유지기간</label>
                                     <input type="text" id="tenure" placeholder="-" readonly style="background:#f1f5f9;">
                                 </div>
 
                                 <div class="form-group full-width">
-                                    <label>고객 메모</label>
+                                    <label>메모</label>
                                     <textarea id="customerMemo" placeholder="특이사항 입력"></textarea>
                                 </div>
                             </div>
@@ -1272,7 +1272,7 @@
                                         <div class="detail-value" id="detailGender">-</div>
                                     </div>
                                     <div class="detail-item">
-                                        <div class="detail-label">시니어 여부</div>
+                                        <div class="detail-label">65세 이상</div>
                                         <div class="detail-value" id="detailSenior">-</div>
                                     </div>
                                     <div class="detail-item">
@@ -1526,13 +1526,22 @@
         const API_BASE = 'http://127.0.0.1:8000';
         let currentCustomer = null;
 
-        // 🔹 전화 대기 큐
+        // 전화 대기 큐
         let callQueue = [
             '010-0525-0309',
             '010-1331-7181',
             '010-8400-8327',
             '010-0299-5900'
         ];
+        // contact_number 전체 풀 (백엔드에서 받아온 걸로 채우면 됨)
+        let contactPool = [];   // ← 백엔드에서 받은 값으로 채워질 예정
+
+        // 랜덤 연락처 하나 뽑기
+        function getRandomContactNumber() {
+            if (contactPool.length === 0) return null;
+            const idx = Math.floor(Math.random() * contactPool.length);
+            return contactPool[idx];
+        }
 
         // Timer
         let seconds = 0;
@@ -1788,7 +1797,14 @@
 
             // 위험 요인
             const factors = [];
-            if (customer.issue_category === '요금') factors.push('💰 요금 불만');
+            if (customer.issue_category) {
+                const icon =
+                        customer.issue_category === '요금' ? '💰' :
+                                customer.issue_category === '품질' ? '📶' :
+                                        '💬'; // 기타
+
+                factors.push(`${icon} ${customer.issue_category} 불만`);
+            }
             if (customer.repeat_contacts_7d > 1) factors.push('📞 반복 문의 ' + customer.repeat_contacts_7d + '회');
             if (customer.wait_time_sec > 30) factors.push('⏱️ 대기 ' + customer.wait_time_sec + '초');
             if (customer.billing_issue_flag) factors.push('🧾 청구 문제');
@@ -1799,10 +1815,10 @@
                 : '<span class="risk-factor-badge">특이사항 없음</span>';
 
             // 요약 정보
-            document.getElementById('summaryCustomerId').textContent = customer.customerID || '-';
-            document.getElementById('summaryContract').textContent = customer.Contract || '-';
+            document.getElementById('summaryCustomerId').textContent = formatCustomerId(customer.customerID);
+            document.getElementById('summaryContract').textContent = formatContract(customer.Contract);
             document.getElementById('summaryTenure').textContent = customer.tenure ? customer.tenure + '개월' : '-';
-            document.getElementById('summaryMonthly').textContent = customer.MonthlyCharges ? '$' + customer.MonthlyCharges : '-';
+            document.getElementById('summaryMonthly').textContent = formatCurrencyKRW(customer.MonthlyCharges);
             document.getElementById('summaryIssue').textContent = customer.issue_category || '-';
 
             // 스크립트 업데이트
@@ -1894,19 +1910,26 @@
         function displayCustomerData(customer) {
             document.getElementById('customerName').value = customer.customer_name || '';
             document.getElementById('customerPhone').value = formatPhone(customer.contact_number) || '';
-            document.getElementById('customerId').value = customer.customerID || '';
-            document.getElementById('contractType').value = customer.Contract || '';
+            document.getElementById('customerId').value = formatCustomerId(customer.customerID);
+            document.getElementById('contractType').value = formatContract(customer.Contract);
             document.getElementById('tenure').value = customer.tenure ? `${customer.tenure}개월` : '';
 
             document.getElementById('detailGender').textContent = customer.gender === 'True' || customer.gender === true ? '여성' : '남성';
             document.getElementById('detailSenior').textContent = customer.SeniorCitizen === 'True' || customer.SeniorCitizen === true ? '예' : '아니오';
-            document.getElementById('detailMonthly').textContent = customer.MonthlyCharges ? `$${customer.MonthlyCharges}` : '-';
-            document.getElementById('detailTotal').textContent = customer.TotalCharges ? `$${customer.TotalCharges}` : '-';
-            document.getElementById('detailInternet').textContent = customer.InternetService || '-';
-            document.getElementById('detailPayment').textContent = customer.PaymentMethod || '-';
+            document.getElementById('detailMonthly').textContent = formatCurrencyKRW(customer.MonthlyCharges);
+            document.getElementById('detailTotal').textContent = formatCurrencyKRW(customer.TotalCharges);
+            document.getElementById('detailInternet').textContent = translateInternetService(customer.InternetService);
+            document.getElementById('detailPayment').textContent = translatePaymentMethod(customer.PaymentMethod);
             document.getElementById('detailIssue').textContent = customer.issue_category || '-';
             document.getElementById('detailRepeat').textContent = customer.repeat_contacts_7d ? `${customer.repeat_contacts_7d}회` : '-';
-            document.getElementById('detailConsultation').textContent = '상담 내역이 없습니다.';
+            const summary =
+                    customer.recent_summary_text ||  // 백엔드에서 별칭 만들었으면 이거
+                    customer.summary_text;           // 아니면 원래 컬럼 이름
+
+            document.getElementById('detailConsultation').textContent =
+                    summary && summary.trim()
+                            ? summary
+                            : '상담 내역이 없습니다.';
 
             const churnIndicator = document.getElementById('churnIndicator');
             const churnIcon = document.getElementById('churnIcon');
@@ -1957,6 +1980,7 @@
             updateHistoryTable(customer);
             showDetail();
         }
+
 
         function updateHistoryTable(customer) {
             const tbody = document.getElementById('historyTableBody');
@@ -2134,6 +2158,34 @@
             }
         });
 
+            // 5~15초 사이 랜덤 시간마다 새로운 대기 고객 추가
+            function scheduleNextIncomingCall() {
+                const delay = (5 + Math.random() * 10) * 1000;
+
+                setTimeout(() => {
+
+                    // 🔥 8명 이상이면 더 이상 새 전화 안 받음
+                    if (callQueue.length >= 8) {
+                        console.log("대기열이 최대 8명입니다. 새로운 전화 수신 중단.");
+                        return;      // ★ 더 이상 아래 코드 실행 안 함
+                    }
+
+                    const newNumber = getRandomContactNumber();
+                    if (newNumber) {
+                        if (!callQueue.includes(newNumber)) {
+                            callQueue.push(newNumber);
+                        }
+                        showCallRequestToast();
+                    }
+
+                    // 🔁 다음 스케줄 계속 반복
+                    scheduleNextIncomingCall();
+
+                }, delay);
+            }
+
+
+
         // =============================
         // 콜 요청 토스트 (전화 요청중)
         // =============================
@@ -2153,22 +2205,25 @@
             const toast = document.createElement('div');
             toast.className = 'toast call-request';
 
-            // callQueue 배열 기준으로 li 동적 생성
-            const listItems = callQueue
-                    .map(num => `<li>${num}</li>`)
+            const MAX_DISPLAY = 8;
+            const displayQueue = callQueue.slice(0, MAX_DISPLAY);
+
+            // displayQueue 기준으로 li 동적 생성 + 전화번호 포맷 적용
+            const listItems = displayQueue
+                    .map(num => `<li>${formatPhone(num)}</li>`)
                     .join('');
 
             toast.innerHTML = `
-        <div class="toast-icon">📞</div>
-        <div class="toast-content">
-            <h4>대기 중인 고객</h4>
-            <p>아래 고객이 상담 연결을 기다리고 있습니다.</p>
-            <ul class="call-wait-list">
-                ${listItems}
-            </ul>
-        </div>
-        <button class="toast-close" onclick="hideCallRequestToast()">✕</button>
-    `;
+                <div class="toast-icon">📞</div>
+                <div class="toast-content">
+                    <h4>대기 중인 고객 ${callQueue.length}명</h4>
+                    <p>아래 고객이 상담 연결을 기다리고 있습니다.</p>
+                    <ul class="call-wait-list">
+                        ${listItems}
+                    </ul>
+                </div>
+                <button class="toast-close" onclick="hideCallRequestToast()">✕</button>
+            `;
 
             container.appendChild(toast);
 
@@ -2177,6 +2232,7 @@
             }, 10);
         }
 
+
         function hideCallRequestToast() {
             const container = document.getElementById('toastContainer');
             if (!container) return;
@@ -2184,8 +2240,10 @@
         }
 
         // 페이지 로드 시 자동으로 "전화 요청중" 토스트 띄우기
-        document.addEventListener('DOMContentLoaded', () => {
+            document.addEventListener('DOMContentLoaded', async () => {
+            await loadContactPool();       // 🟡 contactPool 백엔드에서 받아오기
             showCallRequestToast();
+            scheduleNextIncomingCall();  // 🟡 랜덤으로 대기 고객 계속 늘어나게
 
             // 통화 관련 버튼 누르면 토스트 닫기
             const ids = ['btnReady', 'btnAway', 'btnHold', 'btnDial', 'answerCallBtn'];
@@ -2197,7 +2255,69 @@
             });
         });
 
+        //  약정 한글로 변환
+        function formatContract(contract) {
+            switch (contract) {
+                case 'Month-to-month':
+                    return '무약정';
+                case 'One year':
+                    return '1년';
+                case 'Two year':
+                    return '2년';
+                default:
+                    return contract || '-';
+            }
+        }
 
+        //  고객ID에서 하이픈(-) 제거
+        function formatCustomerId(id) {
+            if (!id) return '';
+            return String(id).replace(/-/g, '');
+        }
+
+        //  달러 → 원화 변환 (예: $76.45 → 114,000원)
+        function formatCurrencyKRW(usd) {
+            if (usd === null || usd === undefined || usd === '') return '-';
+            const rate = 1470;  //  환율
+            const num = parseFloat(usd);
+            if (isNaN(num)) return '-';
+            const krw = Math.round(num * rate);
+            return krw.toLocaleString('ko-KR') + '원';
+        }
+
+        //  인터넷 서비스 한글 변환
+        function translateInternetService(service) {
+            switch (service) {
+                case 'Fiber optic':
+                    return '광 케이블';
+                case 'DSL':
+                    return 'DSL';
+                case 'No':
+                    return '안함';
+                default:
+                    return service || '-';
+            }
+        }
+
+        // 결제방식 한글 변환
+        function translatePaymentMethod(method) {
+            switch (method) {
+                case 'Electronic check':
+                    return '계좌이체';
+                case 'Credit card (automatic)':
+                    return '신용카드';
+                case 'Mailed check':
+                    return '지로';
+                default:
+                    return method || '-';
+            }
+        }
+
+        async function loadContactPool() {
+            const res = await fetch(`${API_BASE}/contact_numbers`);
+            const data = await res.json();
+            contactPool = data.contact_numbers || [];
+        }
 
 
 

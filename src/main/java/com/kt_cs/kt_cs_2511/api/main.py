@@ -136,9 +136,23 @@ def search_customer(
         "customers": records
     }
 
+# ─────────────────────────────
+# 6) 연락처(랜덤 뽑는 용도)
+# ─────────────────────────────
+@app.get("/contact_numbers")
+def get_contact_numbers():
+    numbers = (
+        df["contact_number"]
+          .dropna()
+          .astype(str)
+          .str.replace(r"\D", "", regex=True)  # 숫자만 남기기(선택)
+          .unique()
+          .tolist()
+    )
+    return {"contact_numbers": numbers}
 
 # ─────────────────────────────
-# 6) 스프링이 호출하는 요약 엔드포인트
+# 7) 스프링이 호출하는 요약 엔드포인트
 # ─────────────────────────────
 @app.get("/summary")
 def summary():
