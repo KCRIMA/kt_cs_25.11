@@ -1280,7 +1280,7 @@
                                         <div class="detail-value" id="detailMonthly">-</div>
                                     </div>
                                     <div class="detail-item">
-                                        <div class="detail-label">총 요금</div>
+                                        <div class="detail-label">연간 요금</div>
                                         <div class="detail-value" id="detailTotal">-</div>
                                     </div>
                                     <div class="detail-item">
@@ -1301,7 +1301,7 @@
                                     </div>
                                     
                                     <div class="consultation-log">
-                                        <div class="detail-label" style="margin-bottom: 8px;">📝 최근 상담 내역</div>
+                                        <div class="detail-label" style="margin-bottom: 8px;">📝 상담내역 요약</div>
                                         <pre id="detailConsultation">-</pre>
                                     </div>
                                 </div>
@@ -1310,7 +1310,7 @@
 
                         <section class="card" style="flex:1;">
                             <div class="tabs">
-                                <div class="tab active">상담이력</div>
+                                <div class="tab active">상담내역</div>
                                 <div class="tab">재통화/콜백</div>
                                 <div class="tab">채널이력</div>
                                 <div class="tab">TODO리스트</div>
@@ -2230,25 +2230,15 @@
             const toast = document.createElement('div');
             toast.className = 'toast call-request';
 
-            const MAX_DISPLAY = 8;
-            const displayQueue = callQueue.slice(0, MAX_DISPLAY);
-
-            // displayQueue 기준으로 li 동적 생성 + 전화번호 포맷 적용
-            const listItems = displayQueue
-                    .map(num => `<li>${formatPhone(num)}</li>`)
-                    .join('');
-
+            // 🔁 여기서부터 내용만 단순 문구로 변경
             toast.innerHTML = `
-                <div class="toast-icon">📞</div>
-                <div class="toast-content">
-                    <h4>대기 중인 고객 ${callQueue.length}명</h4>
-                    <p>아래 고객이 상담 연결을 기다리고 있습니다.</p>
-                    <ul class="call-wait-list">
-                        ${listItems}
-                    </ul>
-                </div>
-                <button class="toast-close" onclick="hideCallRequestToast()">✕</button>
-            `;
+        <div class="toast-icon">📞</div>
+        <div class="toast-content">
+            <h4>대기 중인 고객이 있습니다.</h4>
+            <p>콜을 받아 상담을 시작해 주세요.</p>
+        </div>
+        <button class="toast-close" onclick="hideCallRequestToast()">✕</button>
+    `;
 
             container.appendChild(toast);
 
@@ -2256,6 +2246,8 @@
                 toast.classList.add('show');
             }, 10);
         }
+
+
 
 
         function hideCallRequestToast() {
