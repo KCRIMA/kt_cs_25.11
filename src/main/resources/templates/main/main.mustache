@@ -1018,23 +1018,82 @@
             font-style: italic;
         }
 
+        /* ✅ ChatGPT 느낌 복사 버튼 */
         .copy-btn {
             position: absolute;
-            top: 12px;
-            right: 12px;
-            padding: 6px 12px;
-            background: #14b8a6;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            font-size: 0.8rem;
+            top: -10Px;              /* 더 위로 올림 */
+            right: -9px;
+            width: 34px;
+            height: 34px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            background: rgba(255,255,255,0.75);   /* 살짝 투명 */
+            backdrop-filter: blur(6px);
+
+            border: 1px solid rgba(226,232,240,0.9);
+            border-radius: 10px;
+
+            color: var(--text-gray);
             cursor: pointer;
-            transition: all 0.2s;
+
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+            transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+            padding: 0;
+        }
+
+        .copy-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
         }
 
         .copy-btn:hover {
-            background: #0d9488;
+            transform: translateY(-1px);
+            background: rgba(255,255,255,0.95);
+            border-color: rgba(148,163,184,0.9);
+            color: var(--text-dark);
         }
+
+        /* ✅ 툴팁 (hover 시 “복사”) */
+        .copy-btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: -34px;
+            right: 0;
+
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 8px;
+            border-radius: 8px;
+
+            background: rgba(15,23,42,0.92);
+            color: white;
+
+            opacity: 0;
+            transform: translateY(4px);
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .copy-btn:hover::after {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ✅ 복사됨 상태 */
+        .copy-btn.copied {
+            color: #16a34a;
+            border-color: rgba(22,163,74,0.35);
+        }
+
+        .copy-btn.copied::after {
+            content: "복사됨";
+        }
+
 
         /* 로그인/로그아웃 버튼 호버 애니메이션 */
         #authButton {
@@ -1094,637 +1153,649 @@
 </head>
 <body>
 
-    <!-- 토스트 알림 컨테이너 -->
-    <div class="toast-container" id="toastContainer"></div>
+<!-- 토스트 알림 컨테이너 -->
+<div class="toast-container" id="toastContainer"></div>
 
-    <header>
-        <div class="header-left">
-            <span>AICC Contact Center</span>
-        </div>
-
-        <div class="call-controls">
-            <div class="call-timer">
-                <span style="width: 10px; height: 10px; background: white; border-radius: 50%; animation: blink 1s infinite;"></span>
-                <span id="timer">00:00:00</span>
-            </div>
-            <button class="btn-control active" id="btnReady">ON (대기)</button>
-            <button class="btn-control" id="btnAway">이석</button>
-            <button class="btn-control" id="btnHold">보류</button>
-            <button class="btn-control" id="btnDial">걸기</button>
-            <button class="btn-control" id="answerCallBtn"
-                    style="color: var(--success-green); border-color: var(--success-green);" onclick="answerCall()">받기</button>
-            <button class="btn-control" id="endCallBtn"
-                    style="color: var(--danger-red); border-color: var(--danger-red);" onclick="endCall()">끊기</button>
-        </div>
-
-        <div id="userInfo" style="font-size: 0.9rem; color: var(--text-gray); position: relative;">
-
-            <!-- 사용자 이름 -->
-            <span id="userName">홍길동(2001)님</span>
-
-            <!-- 로그아웃 버튼 -->
-            <button
-                    id="authButton"
-                    class="btn-outline"
-                    style="padding: 4px 8px; font-size: 0.8rem; margin-left: 8px;"
-                    onclick="logoutOrOpenMenu()"
-            >
-                로그아웃
-            </button>
-
-            <!-- 로그인 드롭다운 메뉴 -->
-            <div id="loginDropdown" class="dropdown-menu">
-                <div onclick="loginAsUser()">홍길동</div>
-                <div onclick="goAdminPage()">admin</div>
-            </div>
-        </div>
-    </header>
-
-    <div class="container">
-        <aside>
-            <ul class="nav-menu">
-                <li class="nav-item">업무관리</li>
-                <li class="nav-item">통계</li>
-                <li class="nav-item">정보관리</li>
-                <li class="nav-item">시스템</li>
-            </ul>
-
-            <div class="stat-card">
-                <div class="stat-title">오늘의 할일</div>
-                <div class="stat-value" style="font-size: 1.2rem;">5 건</div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-title">오늘의 성과</div>
-                <div class="stat-row">
-                    <span>평균통화</span>
-                    <span style="font-weight:700" id="avgCallTime">00:00:00</span>
-                </div>
-                <div class="stat-row">
-                    <span>평균대기</span>
-                    <span style="font-weight:700" id="avgWaitTime">00:00:00</span>
-                </div>
-                <div class="stat-row">
-                    <span>응대율</span>
-                    <span style="font-weight:700; color:var(--success-green)">98%</span>
-                </div>
-                <div class="stat-row">
-                    <span>누적통화</span>
-                    <span style="font-weight:700" id="totalCallCount">0건</span>
-                </div>
-            </div>
-        </aside>
-
-        <main>
-            <!-- Main Tab Bar -->
-            <div class="main-tab-bar">
-                <div class="main-tab active" data-tab="consultation" onclick="switchMainTab('consultation')">
-                    <span class="tab-icon">📞</span>
-                    <span>상담메인</span>
-                </div>
-                <div class="main-tab churn-tab" id="churnTab" data-tab="churn-analysis" onclick="switchMainTab('churn-analysis')" style="display: none;">
-                    <span class="tab-icon">⚠️</span>
-                    <span>이탈 위험 분석</span>
-                    <span class="tab-close" onclick="closeChurnTab(event)">✕</span>
-                </div>
-            </div>
-
-            <!-- Tab Content Wrapper -->
-            <div class="main-content-wrapper">
-                
-                <!-- 상담메인 탭 컨텐츠 -->
-                <div class="tab-content active" id="consultationTab">
-                    <div class="main-col-left">
-                        <section class="card">
-                            <div class="card-header">
-                                <div class="card-title">📞 고객 정보</div>
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn-control" onclick="resetForm()">초기화</button>
-                                    <button class="btn-control active" onclick="searchCustomer()">조회</button>
-                                </div>
-                            </div>
-
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label>고객명</label>
-                                    <input type="text" id="customerName" placeholder="이름 입력">
-                                </div>
-                                <div class="form-group">
-                                    <label>연락처</label>
-                                    <input type="text" id="customerPhone" placeholder="010-1234-5678">
-                                </div>
-                                <div class="form-group">
-                                    <label>비상 연락처</label>
-                                    <input type="text" id="homePhone" placeholder="-">
-                                </div>
-
-                                <div class="form-group full-width">
-                                    <label>수신여부</label>
-                                    <div class="checkbox-group">
-                                        <label class="checkbox-item"><input type="checkbox" checked> 전체</label>
-                                        <label class="checkbox-item"><input type="checkbox"> 전화</label>
-                                        <label class="checkbox-item"><input type="checkbox"> 문자</label>
-                                        <label class="checkbox-item"><input type="checkbox"> 이메일</label>
-                                    </div>
-                                </div>
-
-                                <div class="form-group full-width">
-                                    <label>이메일</label>
-                                    <input type="text" id="customerEmail" placeholder="example@email.com">
-                                </div>
-
-                                <div class="form-group">
-                                    <label>고객ID</label>
-                                    <input type="text" id="customerId" placeholder="-" readonly style="background:#f1f5f9;">
-                                </div>
-                                <div class="form-group">
-                                    <label>약정</label>
-                                    <input type="text" id="contractType" placeholder="-" readonly style="background:#f1f5f9;">
-                                </div>
-                                <div class="form-group">
-                                    <label>유지기간</label>
-                                    <input type="text" id="tenure" placeholder="-" readonly style="background:#f1f5f9;">
-                                </div>
-
-                                <div class="form-group full-width">
-                                    <label>메모</label>
-                                    <textarea id="customerMemo" placeholder="특이사항 입력"></textarea>
-                                </div>
-                            </div>
-
-                            <div class="loading" id="loading">
-                                <div class="spinner"></div>
-                            </div>
-
-                            <div class="error-message" id="errorMessage"></div>
-
-                            <div class="customer-detail" id="customerDetail">
-                                <div class="customer-detail-header">
-                                    <div class="customer-detail-title">📊 고객 상세 정보</div>
-                                    <div class="churn-indicator" id="churnIndicator">
-                                        <span id="churnIcon">⚠️</span>
-                                        <span id="churnText">이탈 위험</span>
-                                    </div>
-                                </div>
-                                <div class="detail-grid">
-                                    <div class="detail-item">
-                                        <div class="detail-label">성별</div>
-                                        <div class="detail-value" id="detailGender">-</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-label">연령</div>
-                                        <div class="detail-value" id="detailAge">-</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-label">월 요금</div>
-                                        <div class="detail-value" id="detailMonthly">-</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-label">연간 요금</div>
-                                        <div class="detail-value" id="detailTotal">-</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-label">인터넷 서비스</div>
-                                        <div class="detail-value" id="detailInternet">-</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-label">결제 방식</div>
-                                        <div class="detail-value" id="detailPayment">-</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-label">문의 유형</div>
-                                        <div class="detail-value" id="detailIssue">-</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-label">7일내 반복문의</div>
-                                        <div class="detail-value" id="detailRepeat">-</div>
-                                    </div>
-                                    
-                                    <div class="consultation-log">
-                                        <div class="detail-label" style="margin-bottom: 8px;">📝 상담내역 요약</div>
-                                        <pre id="detailConsultation">-</pre>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section class="card" style="flex:1;">
-                            <div class="tabs">
-                                <div class="tab active">상담내역</div>
-                                <div class="tab">재통화/콜백</div>
-                                <div class="tab">채널이력</div>
-                                <div class="tab">TODO리스트</div>
-                            </div>
-                            
-                            <div style="overflow-x:auto;">
-                                <table class="history-table">
-                                    <thead>
-                                        <tr>
-                                            <th>상담일자</th>
-                                            <th>상담사</th>
-                                            <th>문의유형</th>
-                                            <th>처리상태</th>
-                                            <th>소요시간</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="historyTableBody">
-                                        <tr>
-                                            <td colspan="5" style="text-align:center; color:var(--text-gray);">고객을 조회해주세요.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </section>
-                    </div>
-
-                    <div class="main-col-right">
-                        <section class="card" style="height: 100%; display: flex; flex-direction: column; overflow-y: auto;">
-                            <div class="card-header">
-                                <div class="card-title">📝 상담 등록</div>
-                                <span class="badge badge-blue" style="font-size:0.8rem;">녹취 중</span>
-                            </div>
-
-                            <div class="form-group" style="margin-bottom: 12px;">
-                                <label>통화결과</label>
-                                <select id="callResult">
-                                    <option>-- 선택 --</option>
-                                    <option selected>완료</option>
-                                    <option>재통화예정</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group" style="margin-bottom: 12px;">
-                                <label>통화유형</label>
-                                <input type="text" id="callType" value="인바운드" readonly>
-                            </div>
-
-                            <div class="form-group" style="margin-bottom: 12px;">
-                                <label>상담유형</label>
-                                <div style="display: flex; gap: 4px;">
-                                    <select style="flex:1;" id="category1"><option>대분류</option><option>요금</option><option>품질</option><option>기타</option></select>
-                                    <select style="flex:1;" id="category2"><option>중분류</option></select>
-                                    <select style="flex:1;" id="category3"><option>소분류</option></select>
-                                </div>
-                            </div>
-
-                            <div class="form-group" style="margin-bottom: 12px;">
-                                <label>문의 내용</label>
-                                <textarea id="inquiryContent" style="height: 100px;" placeholder="문의 내용을 입력하세요..."></textarea>
-                            </div>
-
-                            <div class="form-group" style="margin-bottom: 12px;">
-                                <label>조치 내용</label>
-                                <textarea id="actionContent" style="height: 100px;" placeholder="조치 내용을 입력하세요..."></textarea>
-                            </div>
-
-                            <div class="form-group" style="margin-bottom: 20px;">
-                                <label>예약일시</label>
-                                <div style="display: flex; gap: 4px;">
-                                    <input type="checkbox" id="reservationCheck">
-                                    <input type="text" placeholder="YYYY-MM-DD" style="flex:1;" id="reservationDate">
-                                    <input type="text" placeholder="HH:MM" style="width: 80px;" id="reservationTime">
-                                </div>
-                            </div>
-
-                            <div class="btn-group" style="margin-top: auto;">
-                                <button class="btn btn-secondary">저장</button>
-                                <button class="btn btn-primary">저장후 대기</button>
-                            </div>
-                        </section>
-                    </div>
-                </div>
-
-                <!-- 이탈 위험 분석 탭 컨텐츠 -->
-                <div class="tab-content" id="churnAnalysisTab">
-                    <div class="churn-analysis-content">
-                        <div class="churn-left">
-                            <!-- Risk Score Card -->
-                            <section class="card risk-score-card">
-                                <div class="card-header">
-                                    <div class="card-title">⚠️ 이탈 위험도 분석</div>
-                                    <span class="badge badge-red" id="riskBadge">HIGH RISK</span>
-                                </div>
-                                <div class="risk-score-content">
-                                    <div class="risk-gauge">
-                                        <svg width="120" height="120" viewBox="0 0 120 120">
-                                            <circle class="risk-gauge-bg" cx="60" cy="60" r="54"/>
-                                            <circle class="risk-gauge-fill" id="riskGaugeFill" cx="60" cy="60" r="54"/>
-                                        </svg>
-                                        <span class="risk-percentage" id="riskPercentage">0%</span>
-                                    </div>
-                                    <div class="risk-info">
-                                        <h3 id="riskCustomerName">고객명</h3>
-                                        <div class="risk-factors" id="riskFactors">
-                                            <span class="risk-factor-badge">💰 요금 불만</span>
-                                            <span class="risk-factor-badge">📞 반복 문의</span>
-                                            <span class="risk-factor-badge">⏱️ 대기 시간</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
-
-                            <!-- Cause Analysis -->
-                            <section class="card analysis-card">
-                                <h3>🔍 주요 원인 분석</h3>
-                                <div class="analysis-list" id="analysisList">
-                                    <div class="analysis-item">
-                                        <div class="analysis-icon billing">💳</div>
-                                        <div class="analysis-text">
-                                            <div class="analysis-category">요금 측면</div>
-                                            <div class="analysis-description">자동 갱신 서비스로 청구 금액 증가</div>
-                                        </div>
-                                    </div>
-                                    <div class="analysis-item">
-                                        <div class="analysis-icon quality">📶</div>
-                                        <div class="analysis-text">
-                                            <div class="analysis-category">품질 측면</div>
-                                            <div class="analysis-description">사용량 감소로 품질 불만 가능성</div>
-                                        </div>
-                                    </div>
-                                    <div class="analysis-item">
-                                        <div class="analysis-icon service">🎧</div>
-                                        <div class="analysis-text">
-                                            <div class="analysis-category">상담 경험</div>
-                                            <div class="analysis-description">대기 시간 증가로 만족도 하락</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
-
-                            <!-- Action Plan -->
-                            <section class="card action-card">
-                                <div class="card-header">
-                                    <div class="card-title">🎯 우선 대응 전략</div>
-                                </div>
-                                <div class="action-list" id="actionList">
-                                    <div class="action-item">
-                                        <span class="action-number">1</span>
-                                        <span>요금제 재조정 및 부가서비스 해제 검토</span>
-                                    </div>
-                                    <div class="action-item">
-                                        <span class="action-number">2</span>
-                                        <span>품질 점검 절차 안내</span>
-                                    </div>
-                                    <div class="action-item">
-                                        <span class="action-number">3</span>
-                                        <span>반복 문의 고객 공감 스크립트 적용</span>
-                                    </div>
-                                </div>
-                            </section>
-                        </div>
-
-                        <div class="churn-right">
-                            <!-- Recommended Script -->
-                            <section class="card script-card" style="flex: 1;">
-                                <div class="card-header">
-                                    <div class="card-title">💬 추천 상담 스크립트</div>
-                                </div>
-                                <div class="script-content">
-                                    <button class="copy-btn" onclick="copyScript()">📋 복사</button>
-                                    <p class="script-text" id="scriptText">
-                                        고객님, 최근 요금이 높게 청구된 점 불편하셨죠. 자동 갱신된 서비스가 있어 확인 중입니다. 현재 이용 패턴 기준 더 적합한 요금제가 있어 비교해드리겠습니다.
-                                    </p>
-                                </div>
-                            </section>
-
-                            <!-- Customer Info Summary -->
-                            <section class="card">
-                                <div class="card-header">
-                                    <div class="card-title">📋 고객 요약</div>
-                                </div>
-                                <div style="display: flex; flex-direction: column; gap: 12px;">
-                                    <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--bg-color); border-radius: 8px;">
-                                        <span style="color: var(--text-gray);">고객 ID</span>
-                                        <span style="font-weight: 600;" id="summaryCustomerId">-</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--bg-color); border-radius: 8px;">
-                                        <span style="color: var(--text-gray);">계약 유형</span>
-                                        <span style="font-weight: 600;" id="summaryContract">-</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--bg-color); border-radius: 8px;">
-                                        <span style="color: var(--text-gray);">가입 기간</span>
-                                        <span style="font-weight: 600;" id="summaryTenure">-</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--bg-color); border-radius: 8px;">
-                                        <span style="color: var(--text-gray);">월 요금</span>
-                                        <span style="font-weight: 600;" id="summaryMonthly">-</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 10px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
-                                        <span style="color: var(--danger-red);">문의 유형</span>
-                                        <span style="font-weight: 600; color: var(--danger-red);" id="summaryIssue">-</span>
-                                    </div>
-                                </div>
-                            </section>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+<header>
+    <div class="header-left">
+        <span>AICC Contact Center</span>
     </div>
 
-    <script>
-        const API_BASE = 'http://127.0.0.1:8000';
-        let currentCustomer = null;
+    <div class="call-controls">
+        <div class="call-timer">
+            <span style="width: 10px; height: 10px; background: white; border-radius: 50%; animation: blink 1s infinite;"></span>
+            <span id="timer">00:00:00</span>
+        </div>
+        <button class="btn-control active" id="btnReady">ON (대기)</button>
+        <button class="btn-control" id="btnAway">이석</button>
+        <button class="btn-control" id="btnHold">보류</button>
+        <button class="btn-control" id="btnDial">걸기</button>
+        <button class="btn-control" id="answerCallBtn"
+                style="color: var(--success-green); border-color: var(--success-green);" onclick="answerCall()">받기</button>
+        <button class="btn-control" id="endCallBtn"
+                style="color: var(--danger-red); border-color: var(--danger-red);" onclick="endCall()">끊기</button>
+    </div>
 
-        // 전화 대기 큐
-        let callQueue = [
-            '010-0525-0309',
-            '010-1331-7181',
-            '010-8400-8327',
-            '010-0299-5900'
-        ];
-        // contact_number 전체 풀 (백엔드에서 받아온 걸로 채우면 됨)
-        let contactPool = [];   // ← 백엔드에서 받은 값으로 채워질 예정
+    <div id="userInfo" style="font-size: 0.9rem; color: var(--text-gray); position: relative;">
 
-        // 랜덤 연락처 하나 뽑기
-        function getRandomContactNumber() {
-            if (contactPool.length === 0) return null;
-            const idx = Math.floor(Math.random() * contactPool.length);
-            return contactPool[idx];
+        <!-- 사용자 이름 -->
+        <span id="userName">홍길동(2001)님</span>
+
+        <!-- 로그아웃 버튼 -->
+        <button
+                id="authButton"
+                class="btn-outline"
+                style="padding: 4px 8px; font-size: 0.8rem; margin-left: 8px;"
+                onclick="logoutOrOpenMenu()"
+        >
+            로그아웃
+        </button>
+
+        <!-- 로그인 드롭다운 메뉴 -->
+        <div id="loginDropdown" class="dropdown-menu">
+            <div onclick="loginAsUser()">홍길동</div>
+            <div onclick="goAdminPage()">admin</div>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <aside>
+        <ul class="nav-menu">
+            <li class="nav-item">업무관리</li>
+            <li class="nav-item">통계</li>
+            <li class="nav-item">정보관리</li>
+            <li class="nav-item">시스템</li>
+        </ul>
+
+        <div class="stat-card">
+            <div class="stat-title">오늘의 할일</div>
+            <div class="stat-value" style="font-size: 1.2rem;">5 건</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-title">오늘의 성과</div>
+            <div class="stat-row">
+                <span>평균통화</span>
+                <span style="font-weight:700" id="avgCallTime">00:00:00</span>
+            </div>
+            <div class="stat-row">
+                <span>평균대기</span>
+                <span style="font-weight:700" id="avgWaitTime">00:00:00</span>
+            </div>
+            <div class="stat-row">
+                <span>응대율</span>
+                <span style="font-weight:700; color:var(--success-green)">98%</span>
+            </div>
+            <div class="stat-row">
+                <span>누적통화</span>
+                <span style="font-weight:700" id="totalCallCount">0건</span>
+            </div>
+        </div>
+    </aside>
+
+    <main>
+        <!-- Main Tab Bar -->
+        <div class="main-tab-bar">
+            <div class="main-tab active" data-tab="consultation" onclick="switchMainTab('consultation')">
+                <span class="tab-icon">📞</span>
+                <span>상담메인</span>
+            </div>
+            <div class="main-tab churn-tab" id="churnTab" data-tab="churn-analysis" onclick="switchMainTab('churn-analysis')" style="display: none;">
+                <span class="tab-icon">⚠️</span>
+                <span>이탈 위험 분석</span>
+                <span class="tab-close" onclick="closeChurnTab(event)">✕</span>
+            </div>
+        </div>
+
+        <!-- Tab Content Wrapper -->
+        <div class="main-content-wrapper">
+
+            <!-- 상담메인 탭 컨텐츠 -->
+            <div class="tab-content active" id="consultationTab">
+                <div class="main-col-left">
+                    <section class="card">
+                        <div class="card-header">
+                            <div class="card-title">📞 고객 정보</div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn-control" onclick="resetForm()">초기화</button>
+                                <button class="btn-control active" onclick="searchCustomer()">조회</button>
+                            </div>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>고객명</label>
+                                <input type="text" id="customerName" placeholder="이름 입력">
+                            </div>
+                            <div class="form-group">
+                                <label>연락처</label>
+                                <input type="text" id="customerPhone" placeholder="010-1234-5678">
+                            </div>
+                            <div class="form-group">
+                                <label>비상 연락처</label>
+                                <input type="text" id="homePhone" placeholder="-">
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label>수신여부</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-item"><input type="checkbox" checked> 전체</label>
+                                    <label class="checkbox-item"><input type="checkbox"> 전화</label>
+                                    <label class="checkbox-item"><input type="checkbox"> 문자</label>
+                                    <label class="checkbox-item"><input type="checkbox"> 이메일</label>
+                                </div>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label>이메일</label>
+                                <input type="text" id="customerEmail" placeholder="example@email.com">
+                            </div>
+
+                            <div class="form-group">
+                                <label>고객ID</label>
+                                <input type="text" id="customerId" placeholder="-" readonly style="background:#f1f5f9;">
+                            </div>
+                            <div class="form-group">
+                                <label>약정</label>
+                                <input type="text" id="contractType" placeholder="-" readonly style="background:#f1f5f9;">
+                            </div>
+                            <div class="form-group">
+                                <label>유지기간</label>
+                                <input type="text" id="tenure" placeholder="-" readonly style="background:#f1f5f9;">
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label>메모</label>
+                                <textarea id="customerMemo" placeholder="특이사항 입력"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="loading" id="loading">
+                            <div class="spinner"></div>
+                        </div>
+
+                        <div class="error-message" id="errorMessage"></div>
+
+                        <div class="customer-detail" id="customerDetail">
+                            <div class="customer-detail-header">
+                                <div class="customer-detail-title">📊 고객 상세 정보</div>
+                                <div class="churn-indicator" id="churnIndicator">
+                                    <span id="churnIcon">⚠️</span>
+                                    <span id="churnText">이탈 위험</span>
+                                </div>
+                            </div>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <div class="detail-label">성별</div>
+                                    <div class="detail-value" id="detailGender">-</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">연령</div>
+                                    <div class="detail-value" id="detailAge">-</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">월 요금</div>
+                                    <div class="detail-value" id="detailMonthly">-</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">연간 요금</div>
+                                    <div class="detail-value" id="detailTotal">-</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">인터넷 서비스</div>
+                                    <div class="detail-value" id="detailInternet">-</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">결제 방식</div>
+                                    <div class="detail-value" id="detailPayment">-</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">문의 유형</div>
+                                    <div class="detail-value" id="detailIssue">-</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">7일내 반복문의</div>
+                                    <div class="detail-value" id="detailRepeat">-</div>
+                                </div>
+
+                                <div class="consultation-log">
+                                    <div class="detail-label" style="margin-bottom: 8px;">📝 상담내역 요약</div>
+                                    <pre id="detailConsultation">-</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="card" style="flex:1;">
+                        <div class="tabs">
+                            <div class="tab active">상담내역</div>
+                            <div class="tab">재통화/콜백</div>
+                            <div class="tab">채널이력</div>
+                            <div class="tab">TODO리스트</div>
+                        </div>
+
+                        <div style="overflow-x:auto;">
+                            <table class="history-table">
+                                <thead>
+                                <tr>
+                                    <th>상담일자</th>
+                                    <th>상담사</th>
+                                    <th>문의유형</th>
+                                    <th>처리상태</th>
+                                    <th>소요시간</th>
+                                </tr>
+                                </thead>
+                                <tbody id="historyTableBody">
+                                <tr>
+                                    <td colspan="5" style="text-align:center; color:var(--text-gray);">고객을 조회해주세요.</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="main-col-right">
+                    <section class="card" style="height: 100%; display: flex; flex-direction: column; overflow-y: auto;">
+                        <div class="card-header">
+                            <div class="card-title">📝 상담 등록</div>
+                            <span class="badge badge-blue" style="font-size:0.8rem;">녹취 중</span>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label>통화결과</label>
+                            <select id="callResult">
+                                <option>-- 선택 --</option>
+                                <option selected>완료</option>
+                                <option>재통화예정</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label>통화유형</label>
+                            <input type="text" id="callType" value="인바운드" readonly>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label>상담유형</label>
+                            <div style="display: flex; gap: 4px;">
+                                <select style="flex:1;" id="category1"><option>대분류</option><option>요금</option><option>품질</option><option>기타</option></select>
+                                <select style="flex:1;" id="category2"><option>중분류</option></select>
+                                <select style="flex:1;" id="category3"><option>소분류</option></select>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label>문의 내용</label>
+                            <textarea id="inquiryContent" style="height: 100px;" placeholder="문의 내용을 입력하세요..."></textarea>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label>조치 내용</label>
+                            <textarea id="actionContent" style="height: 100px;" placeholder="조치 내용을 입력하세요..."></textarea>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label>예약일시</label>
+                            <div style="display: flex; gap: 4px;">
+                                <input type="checkbox" id="reservationCheck">
+                                <input type="text" placeholder="YYYY-MM-DD" style="flex:1;" id="reservationDate">
+                                <input type="text" placeholder="HH:MM" style="width: 80px;" id="reservationTime">
+                            </div>
+                        </div>
+
+                        <div class="btn-group" style="margin-top: auto;">
+                            <button class="btn btn-secondary">저장</button>
+                            <button class="btn btn-primary">저장후 대기</button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- 이탈 위험 분석 탭 컨텐츠 -->
+            <div class="tab-content" id="churnAnalysisTab">
+                <div class="churn-analysis-content">
+                    <div class="churn-left">
+                        <!-- Risk Score Card -->
+                        <section class="card risk-score-card">
+                            <div class="card-header">
+                                <div class="card-title">⚠️ 이탈 위험도 분석</div>
+                                <span class="badge badge-red" id="riskBadge">HIGH RISK</span>
+                            </div>
+                            <div class="risk-score-content">
+                                <div class="risk-gauge">
+                                    <svg width="120" height="120" viewBox="0 0 120 120">
+                                        <circle class="risk-gauge-bg" cx="60" cy="60" r="54"/>
+                                        <circle class="risk-gauge-fill" id="riskGaugeFill" cx="60" cy="60" r="54"/>
+                                    </svg>
+                                    <span class="risk-percentage" id="riskPercentage">0%</span>
+                                </div>
+                                <div class="risk-info">
+                                    <h3 id="riskCustomerName">고객명</h3>
+                                    <div class="risk-factors" id="riskFactors">
+                                        <span class="risk-factor-badge">💰 요금 불만</span>
+                                        <span class="risk-factor-badge">📞 반복 문의</span>
+                                        <span class="risk-factor-badge">⏱️ 대기 시간</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Cause Analysis -->
+                        <section class="card analysis-card">
+                            <h3>🔍 주요 원인 분석</h3>
+                            <div class="analysis-list" id="analysisList">
+                                <div class="analysis-item">
+                                    <div class="analysis-icon billing">💳</div>
+                                    <div class="analysis-text">
+                                        <div class="analysis-description">-</div>
+                                    </div>
+                                </div>
+                                <div class="analysis-item">
+                                    <div class="analysis-icon quality">📶</div>
+                                    <div class="analysis-text">
+                                        <div class="analysis-description">-</div>
+                                    </div>
+                                </div>
+                                <div class="analysis-item">
+                                    <div class="analysis-icon service">🎧</div>
+                                    <div class="analysis-text">
+                                        <div class="analysis-description">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Action Plan -->
+                        <section class="card action-card">
+                            <div class="card-header">
+                                <div class="card-title">🎯 우선 대응 전략</div>
+                            </div>
+                            <div class="action-list" id="actionList">
+                                <div class="action-item">
+                                    <span class="action-number">1</span>
+                                    <span>-</span>
+                                </div>
+                                <div class="action-item">
+                                    <span class="action-number">2</span>
+                                    <span>-</span>
+                                </div>
+                                <div class="action-item">
+                                    <span class="action-number">3</span>
+                                    <span>-</span>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="churn-right">
+                        <!-- Recommended Script -->
+                        <section class="card script-card" style="flex: 1;">
+                            <div class="card-header">
+                                <div class="card-title">💬 추천 상담 스크립트</div>
+                            </div>
+                            <div class="script-content">
+                                <button class="copy-btn" type="button" onclick="copyScript()" aria-label="복사" data-tooltip="복사">
+                                    <!-- 아이콘 (SVG) -->
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M16 1H6a2 2 0 0 0-2 2v12h2V3h10V1Zm3 4H10a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H10V7h9v14Z"/>
+                                    </svg>
+                                </button>
+
+                                <p class="script-text" id="scriptText">
+                                    고객님, 최근 요금이 높게 청구된 점 불편하셨죠. 자동 갱신된 서비스가 있어 확인 중입니다. 현재 이용 패턴 기준 더 적합한 요금제가 있어 비교해드리겠습니다.
+                                </p>
+                            </div>
+                        </section>
+
+                        <!-- Customer Info Summary -->
+                        <section class="card">
+                            <div class="card-header">
+                                <div class="card-title">📋 고객 요약</div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--bg-color); border-radius: 8px;">
+                                    <span style="color: var(--text-gray);">고객 ID</span>
+                                    <span style="font-weight: 600;" id="summaryCustomerId">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--bg-color); border-radius: 8px;">
+                                    <span style="color: var(--text-gray);">계약 유형</span>
+                                    <span style="font-weight: 600;" id="summaryContract">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--bg-color); border-radius: 8px;">
+                                    <span style="color: var(--text-gray);">가입 기간</span>
+                                    <span style="font-weight: 600;" id="summaryTenure">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--bg-color); border-radius: 8px;">
+                                    <span style="color: var(--text-gray);">월 요금</span>
+                                    <span style="font-weight: 600;" id="summaryMonthly">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 10px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
+                                    <span style="color: var(--danger-red);">문의 유형</span>
+                                    <span style="font-weight: 600; color: var(--danger-red);" id="summaryIssue">-</span>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    const API_BASE = 'http://127.0.0.1:8000';
+    let currentCustomer = null;
+
+    // 전화 대기 큐
+    let callQueue = [
+        '010-0525-0309',
+        '010-1331-7181',
+        '010-8400-8327',
+        '010-0299-5900'
+    ];
+    // contact_number 전체 풀 (백엔드에서 받아온 걸로 채우면 됨)
+    let contactPool = [];   // ← 백엔드에서 받은 값으로 채워질 예정
+
+    // 랜덤 연락처 하나 뽑기
+    function getRandomContactNumber() {
+        if (contactPool.length === 0) return null;
+        const idx = Math.floor(Math.random() * contactPool.length);
+        return contactPool[idx];
+    }
+
+    // Timer
+    let seconds = 0;
+    let timerInterval = null;
+
+    //  오늘 세션 기준 통계 (프론트에서만 관리)
+    let totalCallSeconds = 0;  // 통화 누적
+    let callCount = 0;         // 통화 건수
+    let totalWaitSeconds = 0;   // 대기 누적
+    let waitCount = 0;         // 대기 건수
+    let waitStartTime = null;  // 대기 시작 시각
+
+    //  방금 조회한 고객의 히스토리 row를 기억
+    let currentHistoryRow = null;
+
+    let incomingCallTimer = null;
+
+    let agentStatus = 'ready'; // 글로벌 상담사 상태
+    let isInCall = false;
+
+    // 대기 버튼 눌렀을 때
+    document.getElementById('btnAway').addEventListener('click', () => {
+        agentStatus = 'away';
+
+        // 1) 새로운 콜 생성 타이머 중단
+        if (incomingCallTimer) {
+            clearTimeout(incomingCallTimer);
+            incomingCallTimer = null;
         }
 
-        // Timer
-        let seconds = 0;
-        let timerInterval = null;
+        // 2) 대기 고객 토스트 감추기
+        hideCallRequestToast();
 
-        //  오늘 세션 기준 통계 (프론트에서만 관리)
-        let totalCallSeconds = 0;  // 통화 누적
-        let callCount = 0;         // 통화 건수
-        let totalWaitSeconds = 0;   // 대기 누적
-        let waitCount = 0;         // 대기 건수
-        let waitStartTime = null;  // 대기 시작 시각
+        console.log('상담사 상태: 이석 → 신규 콜 생성 중단 + 토스트 숨김');
+    });
 
-        //  방금 조회한 고객의 히스토리 row를 기억
-        let currentHistoryRow = null;
+    document.getElementById('btnReady').addEventListener('click', () => {
+        agentStatus = 'ready';
 
-        let incomingCallTimer = null;
+        waitStartTime = new Date();
 
-        let agentStatus = 'ready'; // 글로벌 상담사 상태
+        // 1) 대기 고객 토스트 다시 표시
+        showCallRequestToast();
 
-        // 대기 버튼 눌렀을 때
-        document.getElementById('btnAway').addEventListener('click', () => {
-            agentStatus = 'away';
+        // 2) 콜 생성 스케줄 재시작
+        scheduleNextIncomingCall();
 
-            // 1) 새로운 콜 생성 타이머 중단
-            if (incomingCallTimer) {
-                clearTimeout(incomingCallTimer);
-                incomingCallTimer = null;
-            }
-
-            // 2) 대기 고객 토스트 감추기
-            hideCallRequestToast();
-
-            console.log('상담사 상태: 이석 → 신규 콜 생성 중단 + 토스트 숨김');
-        });
-
-        document.getElementById('btnReady').addEventListener('click', () => {
-            agentStatus = 'ready';
-
-            waitStartTime = new Date();
-
-            // 1) 대기 고객 토스트 다시 표시
-            showCallRequestToast();
-
-            // 2) 콜 생성 스케줄 재시작
-            scheduleNextIncomingCall();
-
-            console.log('상담사 상태: 대기 → 신규 콜 생성 재시작');
-        });
+        console.log('상담사 상태: 대기 → 신규 콜 생성 재시작');
+    });
 
 
 
-        function startTimer() {
-            if (timerInterval) return; // 이미 실행 중이면 무시
-            timerInterval = setInterval(() => {
-                seconds++;
-                updateTimerDisplay();
-            }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            const h = Math.floor(seconds / 3600);
-            const m = Math.floor((seconds % 3600) / 60);
-            const s = seconds % 60;
-            document.getElementById('timer').textContent = 
-                `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        }
-
-        // 받기 버튼 클릭 - 타이머 시작
-        function answerCall() {
-            startTimer();
-
-            //  대기시간 계산
-            if (waitStartTime) {
-                const now = new Date();
-                const waitSec = Math.round((now - waitStartTime) / 1000);
-                totalWaitSeconds += waitSec;
-                waitCount += 1;
-                waitStartTime = null;
-                updateWaitStatsUI();   // 화면 업데이트
-            }
-
-            // 🔹 현재 통화중인 번호 = 대기열 맨 앞 번호
-            const currentNumber = callQueue[0];
-            if (currentNumber) {
-                // 0) 이전 고객 이름/ID 등 검색 키 값 초기화
-                document.getElementById('customerName').value = '';
-                // 1) 고객 핸드폰 입력칸에 번호 넣고
-                document.getElementById('customerPhone').value = currentNumber;
-                // 2) 그 번호로 고객 조회 실행
-                searchCustomer();
-            }
-
-            hideCallRequestToast();   // 통화 중에는 토스트 숨김
-        }
-
-        // 끊기 버튼 클릭 - 타이머 중지 및 초기화 + 대기 목록 갱신
-        function endCall() {
-            //  이번 통화 길이 저장
-            const callDurationThisCall = seconds;  // 이번 통화 초 단위
-
-            // 타이머 중지
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
-            // 타이머 0으로 초기화
-            seconds = 0;
+    function startTimer() {
+        if (timerInterval) return; // 이미 실행 중이면 무시
+        timerInterval = setInterval(() => {
+            seconds++;
             updateTimerDisplay();
+        }, 1000);
+    }
 
-            // 🔹 통화 통계 누적
-            if (callDurationThisCall > 0) {
-                totalCallSeconds += callDurationThisCall;
-                callCount += 1;
-                updateCallStatsUI();   // 평균 통화 시간 화면 갱신
-            }
+    function updateTimerDisplay() {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        document.getElementById('timer').textContent =
+                `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
 
-            //  히스토리 테이블의 소요시간과 상태를 실제 통화시간으로 업데이트
-            if (currentHistoryRow) {
-                const tds = currentHistoryRow.querySelectorAll('td');
-                // 4번째 칸(처리상태)
-                tds[3].textContent = '상담종료';
-                // 5번째 칸(소요시간)
-                tds[4].textContent = formatDuration(callDurationThisCall);
-            }
+    // 받기 버튼 클릭 - 타이머 시작
+    function answerCall() {
 
-            // 🔹 통화가 끝났으니, 맨 앞 전화번호 제거
-            if (callQueue.length > 0) {
-                callQueue.shift();   // 첫 번째 번호 제거
-            }
+        // [추가] 통화 시작 상태로 전환 (토스트 재등장 방지)
+        isInCall = true;
 
-            // 🔹 남은 번호가 있으면 토스트 다시 표시
-            if (callQueue.length > 0) {
-                showCallRequestToast();
-            } else {
-                hideCallRequestToast();
-            }
+        startTimer();
+
+        //  대기시간 계산
+        if (waitStartTime) {
+            const now = new Date();
+            const waitSec = Math.round((now - waitStartTime) / 1000);
+            totalWaitSeconds += waitSec;
+            waitCount += 1;
+            waitStartTime = null;
+            updateWaitStatsUI();   // 화면 업데이트
         }
 
+        // 🔹 현재 통화중인 번호 = 대기열 맨 앞 번호
+        const currentNumber = callQueue[0];
+        if (currentNumber) {
+            // 0) 이전 고객 이름/ID 등 검색 키 값 초기화
+            document.getElementById('customerName').value = '';
+            // 1) 고객 핸드폰 입력칸에 번호 넣고
+            document.getElementById('customerPhone').value = currentNumber;
+            // 2) 그 번호로 고객 조회 실행
+            searchCustomer();
+        }
 
-        // Main Tab 전환
-        function switchMainTab(tabId) {
-            // 탭 버튼 활성화
-            document.querySelectorAll('.main-tab').forEach(tab => {
-                tab.classList.remove('active');
-                if (tab.dataset.tab === tabId) {
-                    tab.classList.add('active');
-                }
-            });
+        hideCallRequestToast();   // 통화 중에는 토스트 숨김
+    }
 
-            // 탭 컨텐츠 전환
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
+    // 끊기 버튼 클릭 - 타이머 중지 및 초기화 + 대기 목록 갱신
+    function endCall() {
 
-            if (tabId === 'consultation') {
-                document.getElementById('consultationTab').classList.add('active');
-            } else if (tabId === 'churn-analysis') {
-                document.getElementById('churnAnalysisTab').classList.add('active');
+        //  이번 통화 길이 저장
+        const callDurationThisCall = seconds;  // 이번 통화 초 단위
+
+        // 타이머 중지
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        // 타이머 0으로 초기화
+        seconds = 0;
+        updateTimerDisplay();
+
+        // 🔹 통화 통계 누적
+        if (callDurationThisCall > 0) {
+            totalCallSeconds += callDurationThisCall;
+            callCount += 1;
+            updateCallStatsUI();   // 평균 통화 시간 화면 갱신
+        }
+
+        //  히스토리 테이블의 소요시간과 상태를 실제 통화시간으로 업데이트
+        if (currentHistoryRow) {
+            const tds = currentHistoryRow.querySelectorAll('td');
+            // 4번째 칸(처리상태)
+            tds[3].textContent = '상담종료';
+            // 5번째 칸(소요시간)
+            tds[4].textContent = formatDuration(callDurationThisCall);
+        }
+
+        // 🔹 통화가 끝났으니, 맨 앞 전화번호 제거
+        if (callQueue.length > 0) {
+            callQueue.shift();   // 첫 번째 번호 제거
+        }
+
+        // [추가] 통화 종료 상태로 전환
+        isInCall = false;
+
+        // 🔹 남은 번호가 있으면 토스트 다시 표시
+        if (callQueue.length > 0) {
+            showCallRequestToast();
+        } else {
+            hideCallRequestToast();
+        }
+    }
+
+
+    // Main Tab 전환
+    function switchMainTab(tabId) {
+        // 탭 버튼 활성화
+        document.querySelectorAll('.main-tab').forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.dataset.tab === tabId) {
+                tab.classList.add('active');
             }
-        }
+        });
 
-        // 이탈 위험 분석 탭 닫기
-        function closeChurnTab(event) {
-            event.stopPropagation();
-            document.getElementById('churnTab').style.display = 'none';
-            switchMainTab('consultation');
-        }
+        // 탭 컨텐츠 전환
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
 
-        // 이탈 위험 분석 탭 표시
-        function showChurnTab() {
-            document.getElementById('churnTab').style.display = 'flex';
+        if (tabId === 'consultation') {
+            document.getElementById('consultationTab').classList.add('active');
+        } else if (tabId === 'churn-analysis') {
+            document.getElementById('churnAnalysisTab').classList.add('active');
         }
+    }
 
-        // 토스트 알림 표시
-        function showChurnToast(customer, riskScore) {
-            const container = document.getElementById('toastContainer');
-            
-            // 기존 토스트 제거
-            container.innerHTML = '';
-            
-            const toast = document.createElement('div');
-            toast.className = 'toast churn-alert';
-            toast.innerHTML = `
+    // 이탈 위험 분석 탭 닫기
+    function closeChurnTab(event) {
+        event.stopPropagation();
+        document.getElementById('churnTab').style.display = 'none';
+        switchMainTab('consultation');
+    }
+
+    // 이탈 위험 분석 탭 표시
+    function showChurnTab() {
+        document.getElementById('churnTab').style.display = 'flex';
+    }
+
+    // 토스트 알림 표시
+    function showChurnToast(customer, riskScore) {
+        const container = document.getElementById('toastContainer');
+
+        // 기존 토스트 제거
+        container.innerHTML = '';
+
+        const toast = document.createElement('div');
+        toast.className = 'toast churn-alert';
+        toast.innerHTML = `
                 <div class="toast-icon">⚠️</div>
                 <div class="toast-content">
                     <div class="toast-title">이상 고객 발견!</div>
@@ -1735,303 +1806,314 @@
                     <button class="toast-btn" onclick="handleToastConfirm()">확인하기</button>
                 </div>
             `;
-            
-            container.appendChild(toast);
-            
-            // 애니메이션을 위해 약간의 딜레이 후 show 클래스 추가
-            setTimeout(() => {
-                toast.classList.add('show');
-            }, 100);
-            
-            // 10초 후 자동으로 닫기
-            setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 400);
-                }
-            }, 10000);
-        }
 
+        container.appendChild(toast);
+
+        // 애니메이션을 위해 약간의 딜레이 후 show 클래스 추가
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 100);
+
+        // 10초 후 자동으로 닫기
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }
+        }, 10000);
+    }
+
+    // 토스트 닫기
+    function closeToast(btn) {
+        const toast = btn.closest('.toast');
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400);
+    }
+
+    // 토스트 확인하기 버튼 클릭
+    function handleToastConfirm() {
         // 토스트 닫기
-        function closeToast(btn) {
-            const toast = btn.closest('.toast');
+        const container = document.getElementById('toastContainer');
+        const toast = container.querySelector('.toast');
+        if (toast) {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 400);
         }
 
-        // 토스트 확인하기 버튼 클릭
-        function handleToastConfirm() {
-            // 토스트 닫기
-            const container = document.getElementById('toastContainer');
-            const toast = container.querySelector('.toast');
-            if (toast) {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 400);
-            }
-            
-            // 이탈 위험 분석 탭으로 이동
-            switchMainTab('churn-analysis');
+        // 이탈 위험 분석 탭으로 이동
+        switchMainTab('churn-analysis');
+    }
+
+    // 이탈 위험 분석 데이터 업데이트
+    function updateChurnAnalysis(customer) {
+        // 위험도 계산 (Churn_Probability 활용, 없으면 label 기반)
+        let riskScore;
+        if (customer.Churn_Probability !== undefined && customer.Churn_Probability !== null) {
+            riskScore = Math.round(customer.Churn_Probability * 100);
+        } else {
+            riskScore = customer.label === 1 ? 85 + Math.floor(Math.random() * 10) : 30 + Math.floor(Math.random() * 20);
         }
 
-        // 이탈 위험 분석 데이터 업데이트
-        function updateChurnAnalysis(customer) {
-            // 위험도 계산 (Churn_Probability 활용, 없으면 label 기반)
-            let riskScore;
-            if (customer.Churn_Probability !== undefined && customer.Churn_Probability !== null) {
-                riskScore = Math.round(customer.Churn_Probability * 100);
-            } else {
-                riskScore = customer.label === 1 ? 85 + Math.floor(Math.random() * 10) : 30 + Math.floor(Math.random() * 20);
-            }
-            
-            // 게이지 애니메이션
-            const gauge = document.getElementById('riskGaugeFill');
-            const circumference = 339.3;
-            const offset = circumference - (riskScore / 100) * circumference;
-            gauge.style.strokeDashoffset = offset;
-            
-            // 게이지 색상 변경
-            if (riskScore >= 80) {
-                gauge.style.stroke = 'var(--danger-red)';
-            } else {
-                gauge.style.stroke = 'var(--warning-orange)';
-            }
-            
-            document.getElementById('riskPercentage').textContent = riskScore + '%';
-            document.getElementById('riskCustomerName').textContent = customer.customer_name + ' 고객';
-            
-            // 퍼센트 색상 변경
-            const percentageEl = document.getElementById('riskPercentage');
-            if (riskScore >= 80) {
-                percentageEl.style.color = 'var(--danger-red)';
-            } else {
-                percentageEl.style.color = 'var(--warning-orange)';
-            }
-            
-            // 위험 배지: 80% 이상 HIGH RISK(빨강), 55%~79% MEDIUM RISK(주황)
-            const badge = document.getElementById('riskBadge');
-            const riskCard = document.querySelector('.risk-score-card');
-            const gaugeBg = document.querySelector('.risk-gauge-bg');
-            
-            if (riskScore >= 80) {
-                badge.textContent = 'HIGH RISK';
-                badge.className = 'badge badge-red';
-                riskCard.classList.remove('medium-risk');
-                gaugeBg.style.stroke = '#fecaca';
-            } else {
-                badge.textContent = 'MEDIUM RISK';
-                badge.className = 'badge badge-orange';
-                riskCard.classList.add('medium-risk');
-                gaugeBg.style.stroke = '#fcd34d';
-            }
+        // 게이지 애니메이션
+        const gauge = document.getElementById('riskGaugeFill');
+        const circumference = 339.3;
+        const offset = circumference - (riskScore / 100) * circumference;
+        gauge.style.strokeDashoffset = offset;
 
-            // 위험 요인
-            const factors = [];
-            if (customer.issue_category) {
-                const icon =
-                        customer.issue_category === '요금' ? '💰' :
-                                customer.issue_category === '품질' ? '📶' :
-                                        '💬'; // 기타
+        // 게이지 색상 변경
+        if (riskScore >= 80) {
+            gauge.style.stroke = 'var(--danger-red)';
+        } else {
+            gauge.style.stroke = 'var(--warning-orange)';
+        }
 
-                factors.push(`${icon} ${customer.issue_category} 불만`);
-            }
-            if (customer.repeat_contacts_7d > 1) factors.push('📞 반복 문의 ' + customer.repeat_contacts_7d + '회');
-            if (customer.wait_time_sec > 30) factors.push('⏱️ 대기 ' + customer.wait_time_sec + '초');
-            if (customer.billing_issue_flag) factors.push('🧾 청구 문제');
-            if (customer.usage_change_score < 0) factors.push('📉 사용량 감소');
-            
-            document.getElementById('riskFactors').innerHTML = factors.length > 0 
+        document.getElementById('riskPercentage').textContent = riskScore + '%';
+        document.getElementById('riskCustomerName').textContent = customer.customer_name + ' 고객';
+
+        // 퍼센트 색상 변경
+        const percentageEl = document.getElementById('riskPercentage');
+        if (riskScore >= 80) {
+            percentageEl.style.color = 'var(--danger-red)';
+        } else {
+            percentageEl.style.color = 'var(--warning-orange)';
+        }
+
+        // 위험 배지: 80% 이상 HIGH RISK(빨강), 55%~79% MEDIUM RISK(주황)
+        const badge = document.getElementById('riskBadge');
+        const riskCard = document.querySelector('.risk-score-card');
+        const gaugeBg = document.querySelector('.risk-gauge-bg');
+
+        if (riskScore >= 80) {
+            badge.textContent = 'HIGH RISK';
+            badge.className = 'badge badge-red';
+            riskCard.classList.remove('medium-risk');
+            gaugeBg.style.stroke = '#fecaca';
+        } else {
+            badge.textContent = 'MEDIUM RISK';
+            badge.className = 'badge badge-orange';
+            riskCard.classList.add('medium-risk');
+            gaugeBg.style.stroke = '#fcd34d';
+        }
+
+        // 위험 요인
+        const factors = [];
+        if (customer.issue_category) {
+            const icon =
+                    customer.issue_category === '요금' ? '💰' :
+                            customer.issue_category === '품질' ? '📶' :
+                                    '💬'; // 기타
+
+            factors.push(`${icon} ${customer.issue_category} 불만`);
+        }
+        if (customer.repeat_contacts_7d > 1) factors.push('📞 반복 문의 ' + customer.repeat_contacts_7d + '회');
+        if (customer.wait_time_sec > 30) factors.push('⏱️ 대기 ' + customer.wait_time_sec + '초');
+        if (customer.billing_issue_flag) factors.push('🧾 청구 문제');
+        if (customer.usage_change_score < 0) factors.push('📉 사용량 감소');
+
+        document.getElementById('riskFactors').innerHTML = factors.length > 0
                 ? factors.map(f => `<span class="risk-factor-badge">${f}</span>`).join('')
                 : '<span class="risk-factor-badge">특이사항 없음</span>';
 
-            // 요약 정보
-            document.getElementById('summaryCustomerId').textContent = formatCustomerId(customer.customerID);
-            document.getElementById('summaryContract').textContent = formatContract(customer.Contract);
-            document.getElementById('summaryTenure').textContent = customer.tenure ? customer.tenure + '개월' : '-';
-            document.getElementById('summaryMonthly').textContent = formatCurrencyKRW(customer.MonthlyCharges);
-            document.getElementById('summaryIssue').textContent = customer.issue_category || '-';
+        // 요약 정보
+        document.getElementById('summaryCustomerId').textContent = formatCustomerId(customer.customerID);
+        document.getElementById('summaryContract').textContent = formatContract(customer.Contract);
+        document.getElementById('summaryTenure').textContent = customer.tenure ? customer.tenure + '개월' : '-';
+        document.getElementById('summaryMonthly').textContent = formatCurrencyKRW(customer.MonthlyCharges);
+        document.getElementById('summaryIssue').textContent = customer.issue_category || '-';
 
-            // 스크립트 업데이트
-            updateScript(customer);
+        // 스크립트 업데이트
+        updateScript(customer);
+    }
+
+    // 상담 스크립트 업데이트
+    function updateScript(customer) {
+        let script = '';
+        if (customer.issue_category === '요금') {
+            script = `${customer.customer_name} 고객님, 최근 요금이 높게 청구된 점 불편하셨죠. 자동 갱신된 서비스가 있는지 확인 중입니다. 현재 이용 패턴 기준 더 적합한 요금제가 있어 비교해드리겠습니다.`;
+        } else if (customer.issue_category === '품질') {
+            script = `${customer.customer_name} 고객님, 서비스 품질에 불편을 드려 죄송합니다. 현재 회선 상태를 점검해드리고, 필요시 기사 방문을 예약해드리겠습니다.`;
+        } else {
+            script = `${customer.customer_name} 고객님, 문의 주셔서 감사합니다. ${customer.tenure}개월간 저희 서비스를 이용해주셔서 감사드리며, 어떤 부분이 불편하셨는지 자세히 말씀해 주시면 최선을 다해 도와드리겠습니다.`;
+        }
+        document.getElementById('scriptText').textContent = script;
+    }
+
+    // 스크립트 복사
+    function copyScript() {
+        const text = document.getElementById('scriptText').textContent;
+        const btn = document.querySelector('.copy-btn');
+
+        navigator.clipboard.writeText(text).then(() => {
+            btn.classList.add('copied');
+            // 툴팁 문구는 CSS에서 "복사됨"으로 자동 처리됨
+            setTimeout(() => btn.classList.remove('copied'), 1400);
+        });
+    }
+
+
+    function normalizePhoneForSearch(phone) {
+        if (phone === null || phone === undefined) return '';
+
+        const s = String(phone);              // ✅ 핵심: 무조건 문자열로 변환
+        let digits = s.replace(/\D/g, '');     // 숫자만 남기기
+        digits = digits.replace(/^0+/, '');    // 앞의 0 제거
+        return digits;
+    }
+
+
+    // 고객 조회
+    async function searchCustomer() {
+        const name = document.getElementById('customerName').value.trim();
+        const rawPhone = document.getElementById('customerPhone').value.trim();
+
+        if (!name && !rawPhone) {
+            showError('고객명 또는 핸드폰 번호를 입력해주세요.');
+            return;
         }
 
-        // 상담 스크립트 업데이트
-        function updateScript(customer) {
-            let script = '';
-            if (customer.issue_category === '요금') {
-                script = `${customer.customer_name} 고객님, 최근 요금이 높게 청구된 점 불편하셨죠. 자동 갱신된 서비스가 있는지 확인 중입니다. 현재 이용 패턴 기준 더 적합한 요금제가 있어 비교해드리겠습니다.`;
-            } else if (customer.issue_category === '품질') {
-                script = `${customer.customer_name} 고객님, 서비스 품질에 불편을 드려 죄송합니다. 현재 회선 상태를 점검해드리고, 필요시 기사 방문을 예약해드리겠습니다.`;
+        hideError();
+        hideDetail();
+        showLoading();
+
+        // 고객 조회 시작할 때: RAG 영역 디폴트로 초기화
+        resetAnalysisToDefault();
+        resetActionToDefault();
+
+
+        try {
+            const params = new URLSearchParams();
+            if (name) params.append('name', name);
+            // 🔹 여기서만 0 + 하이픈 제거해서 API로 보냄
+            if (rawPhone) {
+                const normalized = normalizePhoneForSearch(rawPhone); // 예: 010-0000-0000 -> 1000000000
+                params.append('phone', normalized);
+            }
+
+            const response = await fetch(`${API_BASE}/search/customer?${params.toString()}`);
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || '조회에 실패했습니다.');
+            }
+
+            const data = await response.json();
+
+            if (data.count === 0) {
+                throw new Error('해당 조건에 맞는 고객이 없습니다.');
+            }
+
+            currentCustomer = data.customers[0];
+            displayCustomerData(currentCustomer);
+
+            // [추가] 고객 조회 성공 → 자동으로 RAG 호출 (연락처만 보내면 FastAPI가 나머지 자동채움)
+            const phoneForRag = (currentCustomer?.contact_number ?? rawPhone);
+            await fetchAndRenderRagByPhone(phoneForRag);
+
+
+        } catch (error) {
+            showError(error.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // 고객 데이터 표시
+    function displayCustomerData(customer) {
+        document.getElementById('customerName').value = customer.customer_name || '';
+        document.getElementById('customerPhone').value = formatPhone(customer.contact_number) || '';
+        document.getElementById('customerId').value = formatCustomerId(customer.customerID);
+        document.getElementById('contractType').value = formatContract(customer.Contract);
+        document.getElementById('tenure').value = customer.tenure ? `${customer.tenure}개월` : '';
+
+        document.getElementById('detailGender').textContent = customer.gender === 'True' || customer.gender === true ? '여성' : '남성';
+        document.getElementById('detailAge').textContent = generateAge(customer.customerID, customer.SeniorCitizen === 'True' || customer.SeniorCitizen === true) + '세';
+        document.getElementById('detailMonthly').textContent = formatCurrencyKRW(customer.MonthlyCharges);
+        document.getElementById('detailTotal').textContent = formatCurrencyKRW(customer.MonthlyCharges * 12);
+        document.getElementById('detailInternet').textContent = translateInternetService(customer.InternetService);
+        document.getElementById('detailPayment').textContent = translatePaymentMethod(customer.PaymentMethod);
+        document.getElementById('detailIssue').textContent = customer.issue_category || '-';
+        document.getElementById('detailRepeat').textContent = customer.repeat_contacts_7d ? `${customer.repeat_contacts_7d}회` : '-';
+        const summary =
+                customer.recent_summary_text ||  // 백엔드에서 별칭 만들었으면 이거
+                customer.summary_text;           // 아니면 원래 컬럼 이름
+
+        document.getElementById('detailConsultation').textContent =
+                summary && summary.trim()
+                        ? summary
+                        : '상담 내역이 없습니다.';
+
+        const churnIndicator = document.getElementById('churnIndicator');
+        const churnIcon = document.getElementById('churnIcon');
+        const churnText = document.getElementById('churnText');
+
+        // 위험도 계산 (Churn_Probability 기준)
+        let riskScore = 0;
+        if (customer.Churn_Probability !== undefined && customer.Churn_Probability !== null) {
+            riskScore = Math.round(customer.Churn_Probability * 100);
+        } else if (customer.label === 1) {
+            riskScore = 85 + Math.floor(Math.random() * 10);
+        }
+
+        // 55% 이상일 때만 이탈 위험으로 처리
+        const isChurnRisk = riskScore >= 55;
+
+        if (isChurnRisk) {
+            // 80% 이상: 빨강, 55~79%: 주황
+            if (riskScore >= 80) {
+                churnIndicator.className = 'churn-indicator churn-high';
+                churnIcon.textContent = '🚨';
+                churnText.textContent = '고위험 이탈 고객';
             } else {
-                script = `${customer.customer_name} 고객님, 문의 주셔서 감사합니다. ${customer.tenure}개월간 저희 서비스를 이용해주셔서 감사드리며, 어떤 부분이 불편하셨는지 자세히 말씀해 주시면 최선을 다해 도와드리겠습니다.`;
+                churnIndicator.className = 'churn-indicator churn-medium';
+                churnIcon.textContent = '⚠️';
+                churnText.textContent = '이탈 위험 고객';
             }
-            document.getElementById('scriptText').textContent = script;
+
+            // 이탈 위험 분석 탭 표시
+            showChurnTab();
+            updateChurnAnalysis(customer);
+
+            // 토스트 표시
+            showChurnToast(customer, riskScore);
+        } else {
+            churnIndicator.className = 'churn-indicator churn-low';
+            churnIcon.textContent = '✅';
+            churnText.textContent = '정상 고객';
+
+            // 이탈 위험 분석 탭 숨기기
+            document.getElementById('churnTab').style.display = 'none';
         }
 
-        // 스크립트 복사
-        function copyScript() {
-            const text = document.getElementById('scriptText').textContent;
-            navigator.clipboard.writeText(text).then(() => {
-                const btn = document.querySelector('.copy-btn');
-                btn.textContent = '✓ 복사됨';
-                setTimeout(() => { btn.textContent = '📋 복사'; }, 2000);
-            });
+        if (customer.issue_category) {
+            document.getElementById('category1').value = customer.issue_category;
         }
 
-        function normalizePhoneForSearch(phone) {
-            if (!phone) return '';
+        updateHistoryTable(customer);
+        showDetail();
+    }
 
-            // 1) 숫자만 남기기
-            let digits = phone.replace(/\D/g, '');  // 010-0000-0000 -> 01000000000
 
-            // 2) 맨 앞 0들 제거 (01000000000 -> 1000000000)
-            digits = digits.replace(/^0+/, '');
+    function updateHistoryTable(customer) {
+        const tbody = document.getElementById('historyTableBody');
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
-            return digits;
+        // 새 고객 조회 시 테이블 완전히 초기화
+        tbody.innerHTML = '';
+
+        // 7일내 반복문의 횟수 + 1 개의 행 생성
+        // repeat_contacts_7d가 '-', null, undefined, 0인 경우 0으로 처리
+        let repeatCount = customer.repeat_contacts_7d;
+        if (!repeatCount || repeatCount === '-' || isNaN(Number(repeatCount))) {
+            repeatCount = 0;
+        } else {
+            repeatCount = Number(repeatCount);
         }
+        const totalRows = repeatCount + 1;
 
-        // 고객 조회
-        async function searchCustomer() {
-            const name = document.getElementById('customerName').value.trim();
-            const rawPhone = document.getElementById('customerPhone').value.trim();
-
-            if (!name && !rawPhone) {
-                showError('고객명 또는 핸드폰 번호를 입력해주세요.');
-                return;
-            }
-
-            hideError();
-            hideDetail();
-            showLoading();
-
-            try {
-                const params = new URLSearchParams();
-                if (name) params.append('name', name);
-                // 🔹 여기서만 0 + 하이픈 제거해서 API로 보냄
-                if (rawPhone) {
-                    const normalized = normalizePhoneForSearch(rawPhone); // 예: 010-0000-0000 -> 1000000000
-                    params.append('phone', normalized);
-                }
-
-                const response = await fetch(`${API_BASE}/search/customer?${params.toString()}`);
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.detail || '조회에 실패했습니다.');
-                }
-
-                const data = await response.json();
-                
-                if (data.count === 0) {
-                    throw new Error('해당 조건에 맞는 고객이 없습니다.');
-                }
-
-                currentCustomer = data.customers[0];
-                displayCustomerData(currentCustomer);
-                
-            } catch (error) {
-                showError(error.message);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // 고객 데이터 표시
-        function displayCustomerData(customer) {
-            document.getElementById('customerName').value = customer.customer_name || '';
-            document.getElementById('customerPhone').value = formatPhone(customer.contact_number) || '';
-            document.getElementById('customerId').value = formatCustomerId(customer.customerID);
-            document.getElementById('contractType').value = formatContract(customer.Contract);
-            document.getElementById('tenure').value = customer.tenure ? `${customer.tenure}개월` : '';
-
-            document.getElementById('detailGender').textContent = customer.gender === 'True' || customer.gender === true ? '여성' : '남성';
-            document.getElementById('detailAge').textContent = generateAge(customer.customerID, customer.SeniorCitizen === 'True' || customer.SeniorCitizen === true) + '세';
-            document.getElementById('detailMonthly').textContent = formatCurrencyKRW(customer.MonthlyCharges);
-            document.getElementById('detailTotal').textContent = formatCurrencyKRW(customer.MonthlyCharges * 12);
-            document.getElementById('detailInternet').textContent = translateInternetService(customer.InternetService);
-            document.getElementById('detailPayment').textContent = translatePaymentMethod(customer.PaymentMethod);
-            document.getElementById('detailIssue').textContent = customer.issue_category || '-';
-            document.getElementById('detailRepeat').textContent = customer.repeat_contacts_7d ? `${customer.repeat_contacts_7d}회` : '-';
-            const summary =
-                    customer.recent_summary_text ||  // 백엔드에서 별칭 만들었으면 이거
-                    customer.summary_text;           // 아니면 원래 컬럼 이름
-
-            document.getElementById('detailConsultation').textContent =
-                    summary && summary.trim()
-                            ? summary
-                            : '상담 내역이 없습니다.';
-
-            const churnIndicator = document.getElementById('churnIndicator');
-            const churnIcon = document.getElementById('churnIcon');
-            const churnText = document.getElementById('churnText');
-            
-            // 위험도 계산 (Churn_Probability 기준)
-            let riskScore = 0;
-            if (customer.Churn_Probability !== undefined && customer.Churn_Probability !== null) {
-                riskScore = Math.round(customer.Churn_Probability * 100);
-            } else if (customer.label === 1) {
-                riskScore = 85 + Math.floor(Math.random() * 10);
-            }
-            
-            // 55% 이상일 때만 이탈 위험으로 처리
-            const isChurnRisk = riskScore >= 55;
-            
-            if (isChurnRisk) {
-                // 80% 이상: 빨강, 55~79%: 주황
-                if (riskScore >= 80) {
-                    churnIndicator.className = 'churn-indicator churn-high';
-                    churnIcon.textContent = '🚨';
-                    churnText.textContent = '고위험 이탈 고객';
-                } else {
-                    churnIndicator.className = 'churn-indicator churn-medium';
-                    churnIcon.textContent = '⚠️';
-                    churnText.textContent = '이탈 위험 고객';
-                }
-                
-                // 이탈 위험 분석 탭 표시
-                showChurnTab();
-                updateChurnAnalysis(customer);
-                
-                // 토스트 표시
-                showChurnToast(customer, riskScore);
-            } else {
-                churnIndicator.className = 'churn-indicator churn-low';
-                churnIcon.textContent = '✅';
-                churnText.textContent = '정상 고객';
-                
-                // 이탈 위험 분석 탭 숨기기
-                document.getElementById('churnTab').style.display = 'none';
-            }
-
-            if (customer.issue_category) {
-                document.getElementById('category1').value = customer.issue_category;
-            }
-
-            updateHistoryTable(customer);
-            showDetail();
-        }
-
-
-        function updateHistoryTable(customer) {
-            const tbody = document.getElementById('historyTableBody');
-            const now = new Date();
-            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-
-            // 새 고객 조회 시 테이블 완전히 초기화
-            tbody.innerHTML = '';
-
-            // 7일내 반복문의 횟수 + 1 개의 행 생성
-            // repeat_contacts_7d가 '-', null, undefined, 0인 경우 0으로 처리
-            let repeatCount = customer.repeat_contacts_7d;
-            if (!repeatCount || repeatCount === '-' || isNaN(Number(repeatCount))) {
-                repeatCount = 0;
-            } else {
-                repeatCount = Number(repeatCount);
-            }
-            const totalRows = repeatCount + 1;
-
-            // 1) 현재 통화 행 (맨 위에 추가)
-            const currentTr = document.createElement('tr');
-            currentTr.innerHTML = `
+        // 1) 현재 통화 행 (맨 위에 추가)
+        const currentTr = document.createElement('tr');
+        currentTr.innerHTML = `
                 <td>${dateStr}</td>
                 <td>홍길동</td>
                 <td><span class="badge ${customer.issue_category === '요금' ? 'badge-orange' : 'badge-blue'}">${customer.issue_category || '일반'}</span></td>
@@ -2039,281 +2121,286 @@
                 <td>통화중</td>
             `;
 
-            // 최신 통화를 맨 위에 쌓기
-            if (tbody.firstChild) {
-                tbody.insertBefore(currentTr, tbody.firstChild);
-            } else {
-                tbody.appendChild(currentTr);
-            }
+        // 최신 통화를 맨 위에 쌓기
+        if (tbody.firstChild) {
+            tbody.insertBefore(currentTr, tbody.firstChild);
+        } else {
+            tbody.appendChild(currentTr);
+        }
 
-            // 🔹 나중에 endCall에서 업데이트할 수 있도록 행을 기억
-            currentHistoryRow = currentTr;
+        // 🔹 나중에 endCall에서 업데이트할 수 있도록 행을 기억
+        currentHistoryRow = currentTr;
 
-            // 2) 과거 상담 내역 임의 생성 (repeatCount 개)
-            const agents = ['홍길동', '김철수', '이영희', '박민수', '최지영'];
-            const statuses = ['상담종료', '상담종료', '상담종료', '콜백완료'];
-            const issueTypes = ['요금', '품질', '기타', '요금', '품질'];
+        // 2) 과거 상담 내역 임의 생성 (repeatCount 개)
+        const agents = ['홍길동', '김철수', '이영희', '박민수', '최지영'];
+        const statuses = ['상담종료', '상담종료', '상담종료', '콜백완료'];
+        const issueTypes = ['요금', '품질', '기타', '요금', '품질'];
 
-            for (let i = 0; i < repeatCount; i++) {
-                const pastTr = document.createElement('tr');
-                
-                // 과거 날짜 생성 (1~7일 전 랜덤)
-                const daysAgo = Math.floor(Math.random() * 7) + 1;
-                const pastDate = new Date(now);
-                pastDate.setDate(pastDate.getDate() - daysAgo);
-                pastDate.setHours(Math.floor(Math.random() * 12) + 8); // 8시~20시 사이
-                pastDate.setMinutes(Math.floor(Math.random() * 60));
-                
-                const pastDateStr = `${pastDate.getFullYear()}-${String(pastDate.getMonth()+1).padStart(2,'0')}-${String(pastDate.getDate()).padStart(2,'0')} ${String(pastDate.getHours()).padStart(2,'0')}:${String(pastDate.getMinutes()).padStart(2,'0')}`;
-                
-                // 랜덤 상담사
-                const randomAgent = agents[Math.floor(Math.random() * agents.length)];
-                
-                // 문의유형 (고객의 issue_category 또는 랜덤)
-                const issueType = customer.issue_category || issueTypes[Math.floor(Math.random() * issueTypes.length)];
-                
-                // 랜덤 처리상태
-                const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-                
-                // 랜덤 소요시간 (1분~15분 사이)
-                const randomMinutes = Math.floor(Math.random() * 14) + 1;
-                const randomSeconds = Math.floor(Math.random() * 60);
-                const durationStr = `00:${String(randomMinutes).padStart(2,'0')}:${String(randomSeconds).padStart(2,'0')}`;
-                
-                // 배지 색상 결정
-                let badgeClass = 'badge-blue';
-                if (issueType === '요금') badgeClass = 'badge-orange';
-                else if (issueType === '품질') badgeClass = 'badge-blue';
-                else badgeClass = 'badge-gray';
-                
-                pastTr.innerHTML = `
+        for (let i = 0; i < repeatCount; i++) {
+            const pastTr = document.createElement('tr');
+
+            // 과거 날짜 생성 (1~7일 전 랜덤)
+            const daysAgo = Math.floor(Math.random() * 7) + 1;
+            const pastDate = new Date(now);
+            pastDate.setDate(pastDate.getDate() - daysAgo);
+            pastDate.setHours(Math.floor(Math.random() * 12) + 8); // 8시~20시 사이
+            pastDate.setMinutes(Math.floor(Math.random() * 60));
+
+            const pastDateStr = `${pastDate.getFullYear()}-${String(pastDate.getMonth()+1).padStart(2,'0')}-${String(pastDate.getDate()).padStart(2,'0')} ${String(pastDate.getHours()).padStart(2,'0')}:${String(pastDate.getMinutes()).padStart(2,'0')}`;
+
+            // 랜덤 상담사
+            const randomAgent = agents[Math.floor(Math.random() * agents.length)];
+
+            // 문의유형 (고객의 issue_category 또는 랜덤)
+            const issueType = customer.issue_category || issueTypes[Math.floor(Math.random() * issueTypes.length)];
+
+            // 랜덤 처리상태
+            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+
+            // 랜덤 소요시간 (1분~15분 사이)
+            const randomMinutes = Math.floor(Math.random() * 14) + 1;
+            const randomSeconds = Math.floor(Math.random() * 60);
+            const durationStr = `00:${String(randomMinutes).padStart(2,'0')}:${String(randomSeconds).padStart(2,'0')}`;
+
+            // 배지 색상 결정
+            let badgeClass = 'badge-blue';
+            if (issueType === '요금') badgeClass = 'badge-orange';
+            else if (issueType === '품질') badgeClass = 'badge-blue';
+            else badgeClass = 'badge-gray';
+
+            pastTr.innerHTML = `
                     <td>${pastDateStr}</td>
                     <td>${randomAgent}</td>
                     <td><span class="badge ${badgeClass}">${issueType}</span></td>
                     <td>${randomStatus}</td>
                     <td>${durationStr}</td>
                 `;
-                
-                // 현재 행 다음에 추가 (날짜 내림차순 유지)
-                tbody.appendChild(pastTr);
-            }
 
-            // 과거 내역을 날짜순으로 정렬 (현재 행 제외하고)
-            sortHistoryTableByDate(tbody);
+            // 현재 행 다음에 추가 (날짜 내림차순 유지)
+            tbody.appendChild(pastTr);
         }
 
-        // 상담내역 테이블을 날짜 내림차순으로 정렬
-        function sortHistoryTableByDate(tbody) {
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-            if (rows.length <= 1) return;
+        // 과거 내역을 날짜순으로 정렬 (현재 행 제외하고)
+        sortHistoryTableByDate(tbody);
+    }
 
-            // 현재 통화중인 행은 항상 맨 위에
-            const currentRow = rows.find(row => row.querySelector('td:last-child')?.textContent === '통화중');
-            const otherRows = rows.filter(row => row !== currentRow);
+    // 상담내역 테이블을 날짜 내림차순으로 정렬
+    function sortHistoryTableByDate(tbody) {
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        if (rows.length <= 1) return;
 
-            // 나머지 행들을 날짜 내림차순 정렬
-            otherRows.sort((a, b) => {
-                const dateA = a.querySelector('td:first-child')?.textContent || '';
-                const dateB = b.querySelector('td:first-child')?.textContent || '';
-                return dateB.localeCompare(dateA);
-            });
+        // 현재 통화중인 행은 항상 맨 위에
+        const currentRow = rows.find(row => row.querySelector('td:last-child')?.textContent === '통화중');
+        const otherRows = rows.filter(row => row !== currentRow);
 
-            // tbody 비우고 다시 채우기
-            tbody.innerHTML = '';
-            if (currentRow) tbody.appendChild(currentRow);
-            otherRows.forEach(row => tbody.appendChild(row));
+        // 나머지 행들을 날짜 내림차순 정렬
+        otherRows.sort((a, b) => {
+            const dateA = a.querySelector('td:first-child')?.textContent || '';
+            const dateB = b.querySelector('td:first-child')?.textContent || '';
+            return dateB.localeCompare(dateA);
+        });
+
+        // tbody 비우고 다시 채우기
+        tbody.innerHTML = '';
+        if (currentRow) tbody.appendChild(currentRow);
+        otherRows.forEach(row => tbody.appendChild(row));
+    }
+
+    function formatPhone(phone) {
+        if (!phone) return '';
+        let digits = String(phone).replace(/\D/g, '');
+
+        // 🔹 CSV가 1000000000(10자리, 1로 시작) 형태면 0을 앞에 붙여줌 → 01000000000
+        if (digits.length === 10 && digits[0] === '1') {
+            digits = '0' + digits;
         }
-
-        function formatPhone(phone) {
-            if (!phone) return '';
-            let digits = String(phone).replace(/\D/g, '');
-
-            // 🔹 CSV가 1000000000(10자리, 1로 시작) 형태면 0을 앞에 붙여줌 → 01000000000
-            if (digits.length === 10 && digits[0] === '1') {
-                digits = '0' + digits;
-            }
-            if (digits.length === 11) {
-                return `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}`;
-            }
-            return phone;
+        if (digits.length === 11) {
+            return `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}`;
         }
+        return phone;
+    }
 
-        function formatDuration(seconds) {
-            const h = Math.floor(seconds / 3600);
-            const m = Math.floor((seconds % 3600) / 60);
-            const s = seconds % 60;
-            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        }
+    function formatDuration(seconds) {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
 
-        function updateCallStatsUI() {
-            if (callCount === 0) return;
+    function updateCallStatsUI() {
+        if (callCount === 0) return;
 
-            const avg = Math.round(totalCallSeconds / callCount);
-            document.getElementById('avgCallTime').textContent = formatDuration(avg);
+        const avg = Math.round(totalCallSeconds / callCount);
+        document.getElementById('avgCallTime').textContent = formatDuration(avg);
 
-            // 🔹 누적통화 UI도 함께 갱신
-            document.getElementById('totalCallCount').textContent = callCount + '건';
-        }
+        // 🔹 누적통화 UI도 함께 갱신
+        document.getElementById('totalCallCount').textContent = callCount + '건';
+    }
 
-        function updateWaitStatsUI() {
-            if (waitCount === 0) return;
-            const avg = Math.round(totalWaitSeconds / waitCount);
-            document.getElementById('avgWaitTime').textContent = formatDuration(avg);
-        }
+    function updateWaitStatsUI() {
+        if (waitCount === 0) return;
+        const avg = Math.round(totalWaitSeconds / waitCount);
+        document.getElementById('avgWaitTime').textContent = formatDuration(avg);
+    }
 
-        function resetForm() {
-            document.getElementById('customerName').value = '';
-            document.getElementById('customerPhone').value = '';
-            document.getElementById('homePhone').value = '';
-            document.getElementById('customerEmail').value = '';
-            document.getElementById('customerId').value = '';
-            document.getElementById('contractType').value = '';
-            document.getElementById('tenure').value = '';
-            document.getElementById('customerMemo').value = '';
-            document.getElementById('inquiryContent').value = '';
-            document.getElementById('actionContent').value = '';
-            
-            hideDetail();
-            hideError();
-            document.getElementById('churnTab').style.display = 'none';
-            switchMainTab('consultation');
-            
-            document.getElementById('historyTableBody').innerHTML = `
+    function resetForm() {
+        document.getElementById('customerName').value = '';
+        document.getElementById('customerPhone').value = '';
+        document.getElementById('homePhone').value = '';
+        document.getElementById('customerEmail').value = '';
+        document.getElementById('customerId').value = '';
+        document.getElementById('contractType').value = '';
+        document.getElementById('tenure').value = '';
+        document.getElementById('customerMemo').value = '';
+        document.getElementById('inquiryContent').value = '';
+        document.getElementById('actionContent').value = '';
+
+        hideDetail();
+        hideError();
+        document.getElementById('churnTab').style.display = 'none';
+        switchMainTab('consultation');
+
+        document.getElementById('historyTableBody').innerHTML = `
                 <tr>
                     <td colspan="5" style="text-align:center; color:var(--text-gray);">고객을 조회해주세요.</td>
                 </tr>
             `;
-            currentCustomer = null;
+        currentCustomer = null;
+    }
+
+    function showLoading() { document.getElementById('loading').classList.add('show'); }
+    function hideLoading() { document.getElementById('loading').classList.remove('show'); }
+    function showError(message) {
+        const el = document.getElementById('errorMessage');
+        el.textContent = '❌ ' + message;
+        el.classList.add('show');
+    }
+    function hideError() { document.getElementById('errorMessage').classList.remove('show'); }
+    function showDetail() { document.getElementById('customerDetail').classList.add('show'); }
+    function hideDetail() { document.getElementById('customerDetail').classList.remove('show'); }
+
+    // Enter 키로 검색
+    document.getElementById('customerName').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchCustomer();
+    });
+    document.getElementById('customerPhone').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchCustomer();
+    });
+
+    let isLoggedIn = true;  // 초기 상태 = 로그인됨
+
+    // 로그아웃 OR 로그인 메뉴 오픈
+    function logoutOrOpenMenu() {
+        if (isLoggedIn) {
+            // 로그아웃 실행
+            logout();
+        } else {
+            // 로그인 드롭다운 열기
+            toggleDropdown();
         }
+    }
 
-        function showLoading() { document.getElementById('loading').classList.add('show'); }
-        function hideLoading() { document.getElementById('loading').classList.remove('show'); }
-        function showError(message) {
-            const el = document.getElementById('errorMessage');
-            el.textContent = '❌ ' + message;
-            el.classList.add('show');
+    // 로그아웃 기능
+    function logout() {
+        isLoggedIn = false;
+
+        // 이름 숨기기
+        document.getElementById('userName').style.display = 'none';
+
+        // 버튼을 "로그인 ⌵"으로 변경
+        const btn = document.getElementById('authButton');
+        btn.textContent = "로그인 ⌵";
+
+        // 드롭다운 닫기
+        document.getElementById('loginDropdown').style.display = 'none';
+    }
+
+    // 로그인 메뉴 열기/닫기
+    function toggleDropdown() {
+        const menu = document.getElementById('loginDropdown');
+        menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
+    }
+
+    // 홍길동 로그인
+    function loginAsUser() {
+        isLoggedIn = true;
+
+        // 이름 표시
+        document.getElementById('userName').style.display = 'inline';
+
+        // 버튼 텍스트 변경
+        const btn = document.getElementById('authButton');
+        btn.textContent = "로그아웃";
+
+        // 드롭다운 닫기
+        document.getElementById('loginDropdown').style.display = 'none';
+    }
+
+    // 관리자 페이지 이동
+    function goAdminPage() {
+        window.location.href = "/admin";   // 원하는 URL로 변경
+    }
+
+    // 바깥 클릭 시 드롭다운 닫기
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('loginDropdown');
+        const button = document.getElementById('authButton');
+
+        if (!dropdown.contains(event.target) && event.target !== button) {
+            dropdown.style.display = "none";
         }
-        function hideError() { document.getElementById('errorMessage').classList.remove('show'); }
-        function showDetail() { document.getElementById('customerDetail').classList.add('show'); }
-        function hideDetail() { document.getElementById('customerDetail').classList.remove('show'); }
+    });
 
-        // Enter 키로 검색
-        document.getElementById('customerName').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') searchCustomer();
-        });
-        document.getElementById('customerPhone').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') searchCustomer();
-        });
+    // 5~15초 사이 랜덤 시간마다 새로운 대기 고객 추가
+    function scheduleNextIncomingCall() {
+        const delay = (5 + Math.random() * 10) * 1000;
 
-        let isLoggedIn = true;  // 초기 상태 = 로그인됨
+        incomingCallTimer = setTimeout(() => {
 
-        // 로그아웃 OR 로그인 메뉴 오픈
-        function logoutOrOpenMenu() {
-            if (isLoggedIn) {
-                // 로그아웃 실행
-                logout();
-            } else {
-                // 로그인 드롭다운 열기
-                toggleDropdown();
-            }
-        }
-
-        // 로그아웃 기능
-        function logout() {
-            isLoggedIn = false;
-
-            // 이름 숨기기
-            document.getElementById('userName').style.display = 'none';
-
-            // 버튼을 "로그인 ⌵"으로 변경
-            const btn = document.getElementById('authButton');
-            btn.textContent = "로그인 ⌵";
-
-            // 드롭다운 닫기
-            document.getElementById('loginDropdown').style.display = 'none';
-        }
-
-        // 로그인 메뉴 열기/닫기
-        function toggleDropdown() {
-            const menu = document.getElementById('loginDropdown');
-            menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
-        }
-
-        // 홍길동 로그인
-        function loginAsUser() {
-            isLoggedIn = true;
-
-            // 이름 표시
-            document.getElementById('userName').style.display = 'inline';
-
-            // 버튼 텍스트 변경
-            const btn = document.getElementById('authButton');
-            btn.textContent = "로그아웃";
-
-            // 드롭다운 닫기
-            document.getElementById('loginDropdown').style.display = 'none';
-        }
-
-        // 관리자 페이지 이동
-        function goAdminPage() {
-            window.location.href = "/admin";   // 원하는 URL로 변경
-        }
-
-        // 바깥 클릭 시 드롭다운 닫기
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('loginDropdown');
-            const button = document.getElementById('authButton');
-
-            if (!dropdown.contains(event.target) && event.target !== button) {
-                dropdown.style.display = "none";
-            }
-        });
-
-            // 5~15초 사이 랜덤 시간마다 새로운 대기 고객 추가
-            function scheduleNextIncomingCall() {
-                const delay = (5 + Math.random() * 10) * 1000;
-
-                incomingCallTimer = setTimeout(() => {
-
-                    // 이석 상태일 때 → 신규 콜 생성 중단
-                    if (agentStatus === 'away') return;
-
-                    if (callQueue.length < 8) {
-                        const newNumber = getRandomContactNumber();
-                        if (newNumber && !callQueue.includes(newNumber)) {
-                            callQueue.push(newNumber);
-                        }
-                        showCallRequestToast();
-                    }
-
-                    scheduleNextIncomingCall();
-                }, delay);
-            }
-
-
-
-
-        // =============================
-        // 콜 요청 토스트 (전화 요청중)
-        // =============================
-        function showCallRequestToast() {
-            const container = document.getElementById('toastContainer');
-            if (!container) return;
-
-            // 대기 고객이 없으면 아무것도 표시하지 않음
-            if (callQueue.length === 0) {
-                container.innerHTML = '';
+            if (isInCall) {
+                scheduleNextIncomingCall();
                 return;
             }
 
-            // 기존 토스트 제거
+            // 이석 상태일 때 → 신규 콜 생성 중단
+            if (agentStatus === 'away') return;
+
+            if (callQueue.length < 8) {
+                const newNumber = getRandomContactNumber();
+                if (newNumber && !callQueue.includes(newNumber)) {
+                    callQueue.push(newNumber);
+                }
+                showCallRequestToast();
+            }
+
+            scheduleNextIncomingCall();
+        }, delay);
+    }
+
+
+
+
+    // =============================
+    // 콜 요청 토스트 (전화 요청중)
+    // =============================
+    function showCallRequestToast() {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+
+        // 대기 고객이 없으면 아무것도 표시하지 않음
+        if (callQueue.length === 0) {
             container.innerHTML = '';
+            return;
+        }
 
-            const toast = document.createElement('div');
-            toast.className = 'toast call-request';
+        // 기존 토스트 제거
+        container.innerHTML = '';
 
-            // 🔁 여기서부터 내용만 단순 문구로 변경
-            toast.innerHTML = `
+        const toast = document.createElement('div');
+        toast.className = 'toast call-request';
+
+        // 🔁 여기서부터 내용만 단순 문구로 변경
+        toast.innerHTML = `
         <div class="toast-icon">📞</div>
         <div class="toast-content">
             <h4>대기 중인 고객이 있습니다.</h4>
@@ -2322,122 +2409,254 @@
         <button class="toast-close" onclick="hideCallRequestToast()">✕</button>
     `;
 
-            container.appendChild(toast);
+        container.appendChild(toast);
 
-            setTimeout(() => {
-                toast.classList.add('show');
-            }, 10);
-        }
-
-
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 10);
+    }
 
 
-        function hideCallRequestToast() {
-            const container = document.getElementById('toastContainer');
-            if (!container) return;
-            container.innerHTML = '';
-        }
 
-        // 페이지 로드 시 자동으로 "전화 요청중" 토스트 띄우기
-            document.addEventListener('DOMContentLoaded', async () => {
-            await loadContactPool();       // 🟡 contactPool 백엔드에서 받아오기
-            showCallRequestToast();
-            scheduleNextIncomingCall();  // 🟡 랜덤으로 대기 고객 계속 늘어나게
 
-            // 통화 관련 버튼 누르면 토스트 닫기
-            const ids = ['btnReady', 'btnAway', 'btnHold', 'btnDial', 'answerCallBtn'];
-            ids.forEach(id => {
-                const btn = document.getElementById(id);
-                if (btn) {
-                    btn.addEventListener('click', hideCallRequestToast);
-                }
-            });
+    function hideCallRequestToast() {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        container.innerHTML = '';
+    }
+
+    // 페이지 로드 시 자동으로 "전화 요청중" 토스트 띄우기
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadContactPool();
+        showCallRequestToast();
+        scheduleNextIncomingCall();
+
+        // "받기(answerCallBtn)"는 여기서 빼야 함 (받기는 answerCall() 안에서만 닫기)
+        const ids = ['btnReady', 'btnAway', 'btnHold', 'btnDial'];  // ✅🟨 answerCallBtn 제거
+        ids.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', hideCallRequestToast);
+            }
         });
 
-        // customerID를 seed로 사용해서 같은 고객은 항상 같은 나이가 나오도록
-        function generateAge(customerId, isSenior) {
-            if (!customerId) return isSenior ? 70 : 35; // 기본값
-            
-            // customerID 해시값으로 일관된 랜덤 숫자 생성
-            let hash = 0;
-            for (let i = 0; i < customerId.length; i++) {
-                hash = customerId.charCodeAt(i) + ((hash << 5) - hash);
+        // 끊기(endCallBtn) 누르면 "대기 고객 토스트 다시 보여주기"
+        const endBtn = document.getElementById('endCallBtn');
+        if (endBtn) {
+            endBtn.addEventListener('click', () => {
+                // 콜이 남아있으면 토스트 다시 표시
+                if (callQueue.length > 0) showCallRequestToast();
+            });
+        }
+    });
+
+
+    // customerID를 seed로 사용해서 같은 고객은 항상 같은 나이가 나오도록
+    function generateAge(customerId, isSenior) {
+        if (!customerId) return isSenior ? 70 : 35; // 기본값
+
+        // customerID 해시값으로 일관된 랜덤 숫자 생성
+        let hash = 0;
+        for (let i = 0; i < customerId.length; i++) {
+            hash = customerId.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        hash = Math.abs(hash);
+
+        if (isSenior) {
+            return 65 + (hash % 21); // 65~85세
+        } else {
+            return 20 + (hash % 45); // 20~64세
+        }
+    }
+
+    //  약정 한글로 변환
+    function formatContract(contract) {
+        switch (contract) {
+            case 'Month-to-month':
+                return '무약정';
+            case 'One year':
+                return '1년';
+            case 'Two year':
+                return '2년';
+            default:
+                return contract || '-';
+        }
+    }
+
+    //  고객ID에서 하이픈(-) 제거
+    function formatCustomerId(id) {
+        if (!id) return '';
+        return String(id).replace(/-/g, '');
+    }
+
+    //  달러 → 원화 변환 (예: $76.45 → 114,000원)
+    function formatCurrencyKRW(usd) {
+        if (usd === null || usd === undefined || usd === '') return '-';
+        const rate = 1470;  //  환율
+        const num = parseFloat(usd);
+        if (isNaN(num)) return '-';
+        const krw = Math.round(num * rate);
+        return krw.toLocaleString('ko-KR') + '원';
+    }
+
+    //  인터넷 서비스 한글 변환
+    function translateInternetService(service) {
+        switch (service) {
+            case 'Fiber optic':
+                return '광 케이블';
+            case 'DSL':
+                return 'DSL';
+            case 'No':
+                return '안함';
+            default:
+                return service || '-';
+        }
+    }
+
+    // 결제방식 한글 변환
+    function translatePaymentMethod(method) {
+        switch (method) {
+            case 'Electronic check':
+                return '계좌이체';
+            case 'Credit card (automatic)':
+                return '신용카드';
+            case 'Mailed check':
+                return '지로';
+            default:
+                return method || '-';
+        }
+    }
+
+    async function loadContactPool() {
+        const res = await fetch(`${API_BASE}/contact_numbers`);
+        const data = await res.json();
+        contactPool = data.contact_numbers || [];
+    }
+
+    // 🟧🟧🟧 [추가] 연락처 기반 RAG 호출 (FastAPI /churn/rag)
+    async function fetchAndRenderRagByPhone(phoneOrContactNumber) {
+        try {
+            const phoneNormalized = normalizePhoneForSearch(String(phoneOrContactNumber ?? '')); // 이미 너 코드에 있음
+
+            const res = await fetch(`${API_BASE}/churn/rag`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    // ✅ FastAPI에서 contact_number만 받으면 CSV로 자동 채움
+                    contact_number: phoneNormalized
+                })
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.detail || 'RAG 호출 실패');
             }
-            hash = Math.abs(hash);
-            
-            if (isSenior) {
-                return 65 + (hash % 21); // 65~85세
+
+            const rag = await res.json();
+            renderRagResult(rag);
+
+        } catch (e) {
+            console.warn('[RAG]', e.message);
+            showError("RAG 분석을 불러오지 못했습니다: " + e.message);
+        }
+
+    }
+
+    function resetAnalysisToDefault() {
+        const analysisList = document.getElementById('analysisList');
+        if (!analysisList) return;
+
+        analysisList.innerHTML = `
+                <div class="analysis-item">
+                  <div class="analysis-icon billing">💳</div>
+                  <div class="analysis-text"><div class="analysis-description">-</div></div>
+                </div>
+                <div class="analysis-item">
+                  <div class="analysis-icon quality">📶</div>
+                  <div class="analysis-text"><div class="analysis-description">-</div></div>
+                </div>
+                <div class="analysis-item">
+                  <div class="analysis-icon service">🎧</div>
+                  <div class="analysis-text"><div class="analysis-description">-</div></div>
+                </div>
+              `;
+    }
+
+    function resetActionToDefault() {
+        const actionList = document.getElementById('actionList');
+        if (!actionList) return;
+
+        actionList.innerHTML = `
+                <div class="action-item"><span class="action-number">1</span><span>-</span></div>
+                <div class="action-item"><span class="action-number">2</span><span>-</span></div>
+                <div class="action-item"><span class="action-number">3</span><span>-</span></div>
+            `;
+    }
+
+
+    // [추가] RAG 결과를 "이탈 위험 분석 탭"에 반영
+    function renderRagResult(rag) {
+        // 안전장치: rag가 없으면 디폴트
+        if (!rag) {
+            resetAnalysisToDefault();
+            resetActionToDefault();
+            return;
+        }
+
+        // 1) 주요 원인 분석(main_causes)
+        const analysisList = document.getElementById('analysisList');
+        const causes = Array.isArray(rag.main_causes) ? rag.main_causes.filter(x => String(x).trim()) : [];
+
+        if (analysisList) {
+            if (causes.length === 0) {
+                resetAnalysisToDefault();
             } else {
-                return 20 + (hash % 45); // 20~64세
+                analysisList.innerHTML = causes.slice(0, 3).map((cause, i) => `
+                        <div class="analysis-item">
+                          <!-- ✅ 기존 🔍 아이콘을 '번호 뱃지'로 변경 -->
+                          <div class="analysis-icon quality">
+                            <span class="action-number">${i + 1}</span>
+                          </div>
+                          <div class="analysis-text">
+                            <div class="analysis-description">${cause}</div>
+                          </div>
+                        </div>
+                      `).join('');
             }
         }
 
-        //  약정 한글로 변환
-        function formatContract(contract) {
-            switch (contract) {
-                case 'Month-to-month':
-                    return '무약정';
-                case 'One year':
-                    return '1년';
-                case 'Two year':
-                    return '2년';
-                default:
-                    return contract || '-';
+        // 2) 우선 대응 전략(strategies)
+        const actionList = document.getElementById('actionList');
+        const strategies = Array.isArray(rag.strategies) ? rag.strategies.filter(x => String(x).trim()) : [];
+
+        if (actionList) {
+            if (strategies.length === 0) {
+                resetActionToDefault();
+            } else {
+                actionList.innerHTML = strategies.slice(0, 3).map((s, i) => `
+                        <div class="action-item">
+                          <span class="action-number">${i + 1}</span>
+                          <span>${s}</span>
+                        </div>
+                      `).join('');
             }
         }
 
-        //  고객ID에서 하이픈(-) 제거
-        function formatCustomerId(id) {
-            if (!id) return '';
-            return String(id).replace(/-/g, '');
+        // 3) 추천 상담 스크립트
+        if (rag.recommended_script && String(rag.recommended_script).trim()) {
+            document.getElementById('scriptText').textContent = rag.recommended_script;
         }
 
-        //  달러 → 원화 변환 (예: $76.45 → 114,000원)
-        function formatCurrencyKRW(usd) {
-            if (usd === null || usd === undefined || usd === '') return '-';
-            const rate = 1470;  //  환율
-            const num = parseFloat(usd);
-            if (isNaN(num)) return '-';
-            const krw = Math.round(num * rate);
-            return krw.toLocaleString('ko-KR') + '원';
-        }
-
-        //  인터넷 서비스 한글 변환
-        function translateInternetService(service) {
-            switch (service) {
-                case 'Fiber optic':
-                    return '광 케이블';
-                case 'DSL':
-                    return 'DSL';
-                case 'No':
-                    return '안함';
-                default:
-                    return service || '-';
-            }
-        }
-
-        // 결제방식 한글 변환
-        function translatePaymentMethod(method) {
-            switch (method) {
-                case 'Electronic check':
-                    return '계좌이체';
-                case 'Credit card (automatic)':
-                    return '신용카드';
-                case 'Mailed check':
-                    return '지로';
-                default:
-                    return method || '-';
-            }
-        }
-
-        async function loadContactPool() {
-            const res = await fetch(`${API_BASE}/contact_numbers`);
-            const data = await res.json();
-            contactPool = data.contact_numbers || [];
-        }
+        // RAG가 왔다는 의미이므로 탭 표시
+        showChurnTab();
+    }
 
 
 
-    </script>
+
+
+
+</script>
 </body>
 </html>
+
