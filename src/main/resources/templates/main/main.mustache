@@ -1946,7 +1946,7 @@
             document.getElementById('detailGender').textContent = customer.gender === 'True' || customer.gender === true ? '여성' : '남성';
             document.getElementById('detailSenior').textContent = customer.SeniorCitizen === 'True' || customer.SeniorCitizen === true ? '예' : '아니오';
             document.getElementById('detailMonthly').textContent = formatCurrencyKRW(customer.MonthlyCharges);
-            document.getElementById('detailTotal').textContent = formatCurrencyKRW(customer.TotalCharges);
+            document.getElementById('detailTotal').textContent = formatCurrencyKRW(customer.MonthlyCharges * 12);
             document.getElementById('detailInternet').textContent = translateInternetService(customer.InternetService);
             document.getElementById('detailPayment').textContent = translatePaymentMethod(customer.PaymentMethod);
             document.getElementById('detailIssue').textContent = customer.issue_category || '-';
