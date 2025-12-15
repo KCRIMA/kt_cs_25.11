@@ -1272,8 +1272,8 @@
                                         <div class="detail-value" id="detailGender">-</div>
                                     </div>
                                     <div class="detail-item">
-                                        <div class="detail-label">65세 이상</div>
-                                        <div class="detail-value" id="detailSenior">-</div>
+                                        <div class="detail-label">연령</div>
+                                        <div class="detail-value" id="detailAge">-</div>
                                     </div>
                                     <div class="detail-item">
                                         <div class="detail-label">월 요금</div>
@@ -1944,7 +1944,7 @@
             document.getElementById('tenure').value = customer.tenure ? `${customer.tenure}개월` : '';
 
             document.getElementById('detailGender').textContent = customer.gender === 'True' || customer.gender === true ? '여성' : '남성';
-            document.getElementById('detailSenior').textContent = customer.SeniorCitizen === 'True' || customer.SeniorCitizen === true ? '예' : '아니오';
+            document.getElementById('detailAge').textContent = generateAge(customer.customerID, customer.SeniorCitizen === 'True' || customer.SeniorCitizen === true) + '세';
             document.getElementById('detailMonthly').textContent = formatCurrencyKRW(customer.MonthlyCharges);
             document.getElementById('detailTotal').textContent = formatCurrencyKRW(customer.MonthlyCharges * 12);
             document.getElementById('detailInternet').textContent = translateInternetService(customer.InternetService);
@@ -2353,6 +2353,24 @@
                 }
             });
         });
+
+        // customerID를 seed로 사용해서 같은 고객은 항상 같은 나이가 나오도록
+        function generateAge(customerId, isSenior) {
+            if (!customerId) return isSenior ? 70 : 35; // 기본값
+            
+            // customerID 해시값으로 일관된 랜덤 숫자 생성
+            let hash = 0;
+            for (let i = 0; i < customerId.length; i++) {
+                hash = customerId.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            hash = Math.abs(hash);
+            
+            if (isSenior) {
+                return 65 + (hash % 21); // 65~85세
+            } else {
+                return 20 + (hash % 45); // 20~64세
+            }
+        }
 
         //  약정 한글로 변환
         function formatContract(contract) {
