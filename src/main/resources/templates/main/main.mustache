@@ -2016,14 +2016,22 @@
             const now = new Date();
             const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
-            // "고객을 조회해주세요." 안내 문구가 있으면 제거
-            if (tbody.children.length === 1 && tbody.children[0].children.length === 1) {
-                tbody.innerHTML = '';
+            // 새 고객 조회 시 테이블 완전히 초기화
+            tbody.innerHTML = '';
+
+            // 7일내 반복문의 횟수 + 1 개의 행 생성
+            // repeat_contacts_7d가 '-', null, undefined, 0인 경우 0으로 처리
+            let repeatCount = customer.repeat_contacts_7d;
+            if (!repeatCount || repeatCount === '-' || isNaN(Number(repeatCount))) {
+                repeatCount = 0;
+            } else {
+                repeatCount = Number(repeatCount);
             }
+            const totalRows = repeatCount + 1;
 
-            const tr = document.createElement('tr');
-
-            tr.innerHTML = `
+            // 1) 현재 통화 행 (맨 위에 추가)
+            const currentTr = document.createElement('tr');
+            currentTr.innerHTML = `
                 <td>${dateStr}</td>
                 <td>홍길동</td>
                 <td><span class="badge ${customer.issue_category === '요금' ? 'badge-orange' : 'badge-blue'}">${customer.issue_category || '일반'}</span></td>
@@ -2031,15 +2039,89 @@
                 <td>통화중</td>
             `;
 
-            // 최신 통화를 맨 위에 쌓기 (아래로 쌓고 싶으면 appendChild로 바꾸면 됨)
+            // 최신 통화를 맨 위에 쌓기
             if (tbody.firstChild) {
-                tbody.insertBefore(tr, tbody.firstChild);
+                tbody.insertBefore(currentTr, tbody.firstChild);
             } else {
-                tbody.appendChild(tr);
+                tbody.appendChild(currentTr);
             }
 
             // 🔹 나중에 endCall에서 업데이트할 수 있도록 행을 기억
-            currentHistoryRow = tr;
+            currentHistoryRow = currentTr;
+
+            // 2) 과거 상담 내역 임의 생성 (repeatCount 개)
+            const agents = ['홍길동', '김철수', '이영희', '박민수', '최지영'];
+            const statuses = ['상담종료', '상담종료', '상담종료', '콜백완료'];
+            const issueTypes = ['요금', '품질', '기타', '요금', '품질'];
+
+            for (let i = 0; i < repeatCount; i++) {
+                const pastTr = document.createElement('tr');
+                
+                // 과거 날짜 생성 (1~7일 전 랜덤)
+                const daysAgo = Math.floor(Math.random() * 7) + 1;
+                const pastDate = new Date(now);
+                pastDate.setDate(pastDate.getDate() - daysAgo);
+                pastDate.setHours(Math.floor(Math.random() * 12) + 8); // 8시~20시 사이
+                pastDate.setMinutes(Math.floor(Math.random() * 60));
+                
+                const pastDateStr = `${pastDate.getFullYear()}-${String(pastDate.getMonth()+1).padStart(2,'0')}-${String(pastDate.getDate()).padStart(2,'0')} ${String(pastDate.getHours()).padStart(2,'0')}:${String(pastDate.getMinutes()).padStart(2,'0')}`;
+                
+                // 랜덤 상담사
+                const randomAgent = agents[Math.floor(Math.random() * agents.length)];
+                
+                // 문의유형 (고객의 issue_category 또는 랜덤)
+                const issueType = customer.issue_category || issueTypes[Math.floor(Math.random() * issueTypes.length)];
+                
+                // 랜덤 처리상태
+                const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+                
+                // 랜덤 소요시간 (1분~15분 사이)
+                const randomMinutes = Math.floor(Math.random() * 14) + 1;
+                const randomSeconds = Math.floor(Math.random() * 60);
+                const durationStr = `00:${String(randomMinutes).padStart(2,'0')}:${String(randomSeconds).padStart(2,'0')}`;
+                
+                // 배지 색상 결정
+                let badgeClass = 'badge-blue';
+                if (issueType === '요금') badgeClass = 'badge-orange';
+                else if (issueType === '품질') badgeClass = 'badge-blue';
+                else badgeClass = 'badge-gray';
+                
+                pastTr.innerHTML = `
+                    <td>${pastDateStr}</td>
+                    <td>${randomAgent}</td>
+                    <td><span class="badge ${badgeClass}">${issueType}</span></td>
+                    <td>${randomStatus}</td>
+                    <td>${durationStr}</td>
+                `;
+                
+                // 현재 행 다음에 추가 (날짜 내림차순 유지)
+                tbody.appendChild(pastTr);
+            }
+
+            // 과거 내역을 날짜순으로 정렬 (현재 행 제외하고)
+            sortHistoryTableByDate(tbody);
+        }
+
+        // 상담내역 테이블을 날짜 내림차순으로 정렬
+        function sortHistoryTableByDate(tbody) {
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            if (rows.length <= 1) return;
+
+            // 현재 통화중인 행은 항상 맨 위에
+            const currentRow = rows.find(row => row.querySelector('td:last-child')?.textContent === '통화중');
+            const otherRows = rows.filter(row => row !== currentRow);
+
+            // 나머지 행들을 날짜 내림차순 정렬
+            otherRows.sort((a, b) => {
+                const dateA = a.querySelector('td:first-child')?.textContent || '';
+                const dateB = b.querySelector('td:first-child')?.textContent || '';
+                return dateB.localeCompare(dateA);
+            });
+
+            // tbody 비우고 다시 채우기
+            tbody.innerHTML = '';
+            if (currentRow) tbody.appendChild(currentRow);
+            otherRows.forEach(row => tbody.appendChild(row));
         }
 
         function formatPhone(phone) {
