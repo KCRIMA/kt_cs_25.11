@@ -1487,7 +1487,7 @@
                             <h3>🔍 주요 원인 분석</h3>
                             <div class="analysis-list" id="analysisList">
                                 <div class="analysis-item">
-                                    <div class="analysis-icon billing">💳</div>
+
                                     <div class="analysis-text">
                                         <div class="analysis-description">-</div>
                                     </div>
@@ -2568,15 +2568,15 @@
 
         analysisList.innerHTML = `
                 <div class="analysis-item">
-                  <div class="analysis-icon billing">💳</div>
+                  <div class="analysis-icon billing"></div>
                   <div class="analysis-text"><div class="analysis-description">-</div></div>
                 </div>
                 <div class="analysis-item">
-                  <div class="analysis-icon quality">📶</div>
+                  <div class="analysis-icon quality"></div>
                   <div class="analysis-text"><div class="analysis-description">-</div></div>
                 </div>
                 <div class="analysis-item">
-                  <div class="analysis-icon service">🎧</div>
+                  <div class="analysis-icon service"></div>
                   <div class="analysis-text"><div class="analysis-description">-</div></div>
                 </div>
               `;
@@ -2611,17 +2611,15 @@
             if (causes.length === 0) {
                 resetAnalysisToDefault();
             } else {
-                analysisList.innerHTML = causes.slice(0, 3).map((cause, i) => `
-                        <div class="analysis-item">
-                          <!-- ✅ 기존 🔍 아이콘을 '번호 뱃지'로 변경 -->
-                          <div class="analysis-icon quality">
-                            <span class="action-number">${i + 1}</span>
-                          </div>
-                          <div class="analysis-text">
-                            <div class="analysis-description">${cause}</div>
-                          </div>
-                        </div>
-                      `).join('');
+                analysisList.innerHTML = causes.slice(0, 3).map((cause) => `
+                  <div class="analysis-item">
+
+                    <div class="analysis-text">
+                      <div class="analysis-description">${cause}</div>
+                    </div>
+                  </div>
+                `).join('');
+
             }
         }
 
@@ -2633,12 +2631,12 @@
             if (strategies.length === 0) {
                 resetActionToDefault();
             } else {
-                actionList.innerHTML = strategies.slice(0, 3).map((s, i) => `
-                        <div class="action-item">
-                          <span class="action-number">${i + 1}</span>
-                          <span>${s}</span>
-                        </div>
-                      `).join('');
+                actionList.innerHTML = strategies.slice(0, 3).map((s) => `
+                  <div class="action-item">
+                    <span>${s}</span>
+                  </div>
+                `).join('');
+
             }
         }
 
